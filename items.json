@@ -1,0 +1,26 @@
+{
+    "Healing Potion": {
+        "name": "Healing Potion",
+        "type": "consumable",
+        "price": 50,
+        "effect": "heal",
+        "value": 10
+      },
+      "Short Sword": {
+        "name": "Short Sword",
+        "type": "weapon",
+        "price": 100,
+        "damage": "1d6"
+      },
+      "Leather Armor": {
+        "name": "Leather Armor",
+        "type": "armor",
+        "price": 75,
+        "ac_bonus": 1
+      },
+      "Spellbook": {
+        "name": "Spellbook",
+        "type": "misc",
+        "price": 200
+      }
+}
