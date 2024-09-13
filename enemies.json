@@ -1,0 +1,29 @@
+{
+    "Goblin Leader": {
+        "name": "Goblin Leader",
+        "level": 1,
+        "health": 15,
+        "ac": 11,
+        "attack_bonus": 3,
+        "damage": 5,
+        "gold": 50
+      },
+      "Bandit": {
+        "name": "Bandit",
+        "level": 2,
+        "health": 20,
+        "ac": 12,
+        "attack_bonus": 4,
+        "damage": 6,
+        "gold": 75
+      },
+      "Ancient Dragon": {
+        "name": "Ancient Dragon",
+        "level": 5,
+        "health": 35,
+        "ac": 15,
+        "attack_bonus": 7,
+        "damage": 12,
+        "gold": 500
+      }
+}

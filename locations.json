@@ -1,0 +1,63 @@
+{
+    "Brightwood Village": {
+        "name": "Brightwood Village",
+        "description": "A small, peaceful village nestled in a valley.",
+        "connections": [
+          "Forest Path",
+          "Goblin Camp"
+        ],
+        "shop": true,
+        "shop_name": "The Weary Traveler",
+        "npcs": ["Elder", "Merchant"]
+      },
+      "Forest Path": {
+        "name": "Forest Path",
+        "description": "A winding path through a dense forest.",
+        "connections": [
+          "Brightwood Village",
+          "Bandit Lair"
+        ]
+      },
+      "Goblin Camp": {
+        "name": "Goblin Camp",
+        "description": "A makeshift camp filled with goblins.",
+        "connections": [
+          "Brightwood Village"
+        ],
+        "enemies": ["Goblin Leader"]
+      },
+      "Bandit Lair": {
+        "name": "Bandit Lair",
+        "description": "A hidden cave used as a bandit hideout.",
+        "connections": [
+          "Forest Path"
+        ],
+        "enemies": ["Bandit"]
+      },
+      "Capital City": {
+        "name": "Capital City",
+        "description": "A bustling city, the center of the kingdom.",
+        "connections": [
+          "Mountain Pass",
+          "Dragon's Lair"
+        ],
+        "shop": true,
+        "npcs": ["King"]
+      },
+      "Mountain Pass": {
+        "name": "Mountain Pass",
+        "description": "A treacherous path through the mountains.",
+        "connections": [
+          "Capital City",
+          "Dragon's Lair"
+        ]
+      },
+      "Dragon's Lair": {
+        "name": "Dragon's Lair",
+        "description": "A fiery cavern where the dragon dwells.",
+        "connections": [
+          "Mountain Pass"
+        ],
+        "enemies": ["Ancient Dragon"]
+      }
+}

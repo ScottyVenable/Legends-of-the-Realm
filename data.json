@@ -255,5 +255,12 @@
       "reward_player": {
         "gold": 100
       }
+    },
+    "races":
+    {
+      "Orc": {},
+      "Human": {},
+      "Elf": {},
+      "Dwarf": {}
     }
   }

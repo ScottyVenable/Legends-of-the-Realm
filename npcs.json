@@ -1,0 +1,93 @@
+{
+    "Elder": {
+        "name": "Elder",
+        "role": "Village Elder",
+        "location": "Brightwood Village",
+        "dialogues": [
+            {
+                "speaker": "Elder",
+                "text": "Greetings, traveler. We need your help to save our village from the goblin threat.",
+                "options": [
+                    {
+                        "text": "I will help you.",
+                        "action": "accept_quest",
+                        "next_dialogue": {
+                            "speaker": "Elder",
+                            "text": "Thank you, brave soul! Our village is forever in your debt.",
+                            "options": []
+                        }
+                    },
+                    {
+                        "text": "What's in it for me?",
+                        "action": "persuade_elder",
+                        "next_dialogue": {
+                            "speaker": "Elder",
+                            "text": "Very well, we can offer you 100 gold as a reward for your assistance.",
+                            "options": [
+                                {
+                                    "text": "Accept the reward and help.",
+                                    "action": "accept_quest_with_reward",
+                                    "next_dialogue": {
+                                        "speaker": "Elder",
+                                        "text": "Thank you! Your generosity will not be forgotten.",
+                                        "options": []
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "text": "I'm not interested.",
+                        "action": "refuse_quest",
+                        "next_dialogue": {
+                            "speaker": "Elder",
+                            "text": "That's unfortunate. Farewell.",
+                            "options": []
+                        },
+                        "disabled_if": "quest_persuaded"
+                    }
+                ]
+            }
+        ]
+    },
+    "Merchant": {
+        "name": "Merchant",
+        "role": "Shopkeeper",
+        "location": "Brightwood Village",
+        "dialogues": [
+            {
+                "speaker": "Merchant",
+                "text": "Welcome, traveler! What can I offer you today?",
+                "options": [
+                    {
+                        "text": "Show me your wares.",
+                        "action": "show_wares",
+                        "next_dialogue": {
+                            "speaker": "Merchant",
+                            "text": "Certainly! Take a look at my inventory.",
+                            "options": []
+                        }
+                    },
+                    {
+                        "text": "I'm just browsing.",
+                        "action": "browsing",
+                        "next_dialogue": {
+                            "speaker": "Merchant",
+                            "text": "No problem, take your time.",
+                            "options": []
+                        }
+                    },
+                    {
+                        "text": "I need to leave.",
+                        "action": "leave_shop",
+                        "next_dialogue": {
+                            "speaker": "Merchant",
+                            "text": "Come back anytime!",
+                            "options": []
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
