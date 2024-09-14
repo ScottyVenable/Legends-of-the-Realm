@@ -1,0 +1,25 @@
+{
+    "GoblinThreat": {
+      "name": "Goblin Threat",
+      "description": "Defeat the goblin raiders attacking the village.",
+      "reward": {
+        "gold": 50,
+        "experience": 100
+      },
+      "location": "Brightwood Village",
+      "objective": "Defeat Goblin Leader",
+      "status": "Available"
+    },
+    "DragonThreat": {
+      "name": "Dragon Threat",
+      "description": "Defeat the dragon threatening the kingdom.",
+      "reward": {
+        "gold": 500,
+        "title": "Hero of the Realm",
+        "experience": 500
+      },
+      "location": "Capital City",
+      "objective": "Defeat Ancient Dragon",
+      "status": "Available"
+    }
+  }

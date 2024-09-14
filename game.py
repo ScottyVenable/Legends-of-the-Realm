@@ -3,22 +3,25 @@ import time
 import os
 import json
 from colorama import init, Fore, Style
+import pygame
+import threading
 
 # Initialize colorama
 init(autoreset=True)
+
 
 # Utility Functions
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def select_option(options, title="Select an option:", clear_screen=True):
+def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_screen=True):
     while True:
         if clear_screen:
             clear_console()
-        print(Fore.YELLOW + title)
+        print(color + title)
         for idx, option in enumerate(options):
             print(f"{idx + 1}. {option}")
-        choice = input("\nEnter the number of your choice: ")
+        choice = input(f"\n{Fore.YELLOW}Enter the number of your choice:{Fore.CYAN} ")
         if choice.isdigit():
             index = int(choice) - 1
             if 0 <= index < len(options):
@@ -55,75 +58,30 @@ def load_game():
 # Game Data
 class GameData:
     def __init__(self):
-        self.items = self.load_items()
-        self.npcs = self.load_npcs()
-        self.enemies = self.load_enemies()
-        self.quests = self.load_quests()
-        self.locations = self.load_locations()
+        self.items = self.load_data("items.json")
+        self.npcs = self.load_data("npcs.json")
+        self.enemies = self.load_data("enemies.json")
+        self.quests = self.load_data("quests.json")
+        self.locations = self.load_data("locations.json")
+        self.races = self.load_data("races.json")
+        self.backgrounds = self.load_data("backgrounds.json")
+        self.classes = self.load_data("classes.json")
+        self.game_info = self.load_data("gameinfo.json")
+        
+        self.title = self.game_info['Name']
+        self.version = self.game_info['Version']
+        self.year = self.game_info['CopyrightYear']
+        self.publisher = self.game_info['Publisher']
+        self.developer = self.game_info['Developer']
 
-    def load_items(self):
-        # Items data
-        items = {
-            'Healing Potion': {'name': 'Healing Potion', 'type': 'consumable', 'price': 50, 'effect': 'heal', 'value': 15},
-            'Short Sword': {'name': 'Short Sword', 'type': 'weapon', 'price': 100, 'damage': '1d6', 'attack_bonus': 1},
-            'Leather Armor': {'name': 'Leather Armor', 'type': 'armor', 'price': 75, 'ac_bonus': 1},
-            'Spellbook': {'name': 'Spellbook', 'type': 'misc', 'price': 200},
-            'Fireball Scroll': {'name': 'Fireball Scroll', 'type': 'spell', 'price': 150, 'damage': '2d6'},
-            'Steel Shield': {'name': 'Steel Shield', 'type': 'armor', 'price': 120, 'ac_bonus': 2},
-        }
-        return items
-
-    def load_npcs(self):
-        # NPCs data
-        npcs = {
-            # Previous NPCs remain the same
-            # Additional NPCs can be added here
-        }
-        return npcs
-
-    def load_enemies(self):
-        # Enemies data
-        enemies = {
-            # Previous enemies remain the same
-            # Additional enemies can be added here
-        }
-        return enemies
-
-    def load_quests(self):
-        # Quests data (not fully implemented in this version)
-        quests = {}
-        return quests
-
-    def load_locations(self):
-        # Locations data
-        locations = {
-            'Village': {
-                'name': 'Village',
-                'description': 'A small, peaceful village surrounded by forests.',
-                'npcs': ['Elder'],
-                'shop': True
-            },
-            'Forest': {
-                'name': 'Forest',
-                'description': 'A dense forest filled with towering trees and hidden dangers.',
-                'enemies': ['Goblin', 'Wolf'],
-                'npcs': []
-            },
-            'Capital City': {
-                'name': 'Capital City',
-                'description': 'A bustling city with towering walls and a magnificent castle.',
-                'npcs': ['King'],
-                'shop': True
-            },
-            'Dragon\'s Lair': {
-                'name': 'Dragon\'s Lair',
-                'description': 'A dark cave nestled in the mountains, home to the ancient dragon.',
-                'enemies': ['Ancient Dragon'],
-                'npcs': []
-            }
-        }
-        return locations
-
+    def load_data(self, filename):
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            return data
+        except FileNotFoundError:
+            print(Fore.RED + f"Error: Could not find {filename}")
+            return {}
 # Character Classes
 class Character:
     def __init__(self, name, race, gender, background, char_class):
@@ -165,7 +123,7 @@ class Character:
             for attr, score in attributes.items():
                 mod = (score - 10) // 2
                 print(f"{attr}: {score} ({mod:+})")
-            attr_choice, _ = select_option(list(attributes.keys()), "Select an attribute to increase:")
+            attr_choice, _ = select_option(list(attributes.keys()), "\nSelect an attribute to increase:", clear_screen= False)
             if attributes[attr_choice] < 15:
                 cost = 1 if attributes[attr_choice] < 13 else 2
                 if points >= cost:
@@ -302,19 +260,22 @@ class Character:
         elif self.health < 0:
             self.health = 0
 
-    def show_stats(self):
-        print(Fore.CYAN + f"\nName: {self.name}")
-        print(Fore.CYAN + f"Gender: {self.gender}")
-        print(Fore.CYAN + f"Race: {self.race}")
-        print(Fore.CYAN + f"Class: {self.char_class}")
-        print(Fore.CYAN + f"Background: {self.background}")
-        print(Fore.CYAN + f"Level: {self.level}")
+    def show_stats(self, clear=True):
+        if clear == True:
+            clear_console()
+        print_titlebar("large", "CHARACTER SHEET", Fore.BLUE)
+        print(Fore.YELLOW + f"\nName: {Fore.CYAN}{self.name}")
+        print(Fore.YELLOW + f"Gender: {Fore.CYAN}{self.gender}")
+        print(Fore.YELLOW + f"Race: {Fore.CYAN}{self.race}")
+        print(Fore.YELLOW + f"Class: {Fore.CYAN}{self.char_class}")
+        print(Fore.YELLOW + f"Background: {Fore.CYAN}{self.background}")
+        print(Fore.YELLOW + f"Level: {self.level}")
         print(Fore.RED + f"Health: {self.health}/{self.max_health}")
-        print(Fore.YELLOW + "Attributes:")
+        print(Fore.YELLOW + "\nAttributes:")
         for attr, score in self.attributes.items():
             mod = self.modifiers[attr]
             print(f"  {attr}: {score} ({mod:+})")
-        print(Fore.MAGENTA + f"Experience: {self.exp}")
+        print(Fore.MAGENTA + f"\nExperience: {self.exp}")
         print(Fore.YELLOW + f"Gold: {self.gold}")
         inventory_names = [item['name'] for item in self.inventory]
         print(Fore.MAGENTA + f"Inventory: {inventory_names}")
@@ -340,16 +301,76 @@ class Character:
         if location_name in game_data.locations:
             self.location = location_name
             location = game_data.locations[location_name]
+            clear_console()
             print(Fore.YELLOW + f"\nYou travel to {location['name']}.")
             print(location['description'])
             input("Press Enter to continue...")
         else:
             print(Fore.RED + "That location does not exist.")
 
+    def show_inventory(self):
+        clear_console()
+    
 # NPC Class
 class NPC:
-    # NPC class remains similar
-    pass  # For brevity, we'll assume it remains the same as previous versions
+    def __init__(self, npc_data):
+        self.name = npc_data.get('name', 'Unknown')  # Handle missing name
+        self.role = npc_data.get('role', 'Unknown')
+        self.location = npc_data.get('location', 'Unknown')
+        self.dialogues = npc_data.get('dialogues', {})
+
+        # Check for required dialogue keys
+        for dialogue_key in ('greeting', 'options'):
+            if dialogue_key not in self.dialogues:
+                print(Fore.RED + f"Error: Missing '{dialogue_key}' key in dialogues for {self.name}")
+                self.dialogues[dialogue_key] = "No dialogue available."
+
+    def talk(self, player, reward_functions):
+        conversation_over = False
+        while not conversation_over:
+            clear_console()
+            print(Fore.BLUE + f"{self.name}: {self.dialogues['greeting']}\n")
+            for idx, option in enumerate(self.dialogues['options']):
+                print(f"{idx + 1}. {option['text']}")
+            print(f"{len(self.dialogues['options']) + 1}. Exit Conversation")
+            choice = input("\nEnter the number of your choice: ")
+            if choice.isdigit():
+                choice = int(choice)
+                if 1 <= choice <= len(self.dialogues['options']):
+                    selected_option = self.dialogues['options'][choice - 1]
+                    self.process_dialogue_option(selected_option, player, reward_functions)
+                    if selected_option.get('end_conversation', False):
+                        conversation_over = True
+                elif choice == len(self.dialogues['options']) + 1:
+                    conversation_over = True
+                else:
+                    print(Fore.RED + "Invalid choice.")
+            else:
+                print(Fore.RED + "Invalid input. Please enter a number.")
+            input("Press Enter to continue...")
+
+    def process_dialogue_option(self, option, player, reward_functions):
+        skill = option.get('skill')
+        difficulty = option.get('difficulty')
+        if skill:
+            print(f"You attempt to {option['text']}")
+            roll = random.randint(1, 20) + player.modifiers[player.skills[skill]] + \
+                   (2 if skill in player.proficiencies else 0)
+            print(f"Skill Check: Rolled {roll} vs DC {difficulty}")
+            if roll >= difficulty:
+                print(Fore.GREEN + option['success'])
+                if 'reward' in option:
+                    reward_func = reward_functions.get(option['reward'])
+                    if reward_func:
+                        reward_func(player)
+            else:
+                print(Fore.RED + option['failure'])
+        else:
+            print(option.get('success', 'You continue the conversation.'))
+            if 'reward' in option:
+                reward_func = reward_functions.get(option['reward'])
+                if reward_func:
+                    reward_func(player)
 
 # Enemy Class
 class Enemy:
@@ -444,19 +465,28 @@ def roll_damage(damage_str):
     return total
 
 # Main Game Loop
-def game():
-    game_data = GameData()
+def game(gamedata):
+    game_data = gamedata
+    music_thread = threading.Thread(target=play_music("music.mp3"))
+    music_thread.start()
     display_title_screen()
-    # Option to load a saved game
-    choice, _ = select_option(['New Game', 'Load Game'], "Select an option:")
+    choice, _ = select_option(['New Game', 'Load Game', 'Exit Game'], "Select an option:", clear_screen=False)
     if choice == 'Load Game':
         player = load_game()
         if not player:
-            player = create_character()
+            player = create_character(game_data)
+    elif choice == 'Exit Game':
+        print(Fore.RED + f"\n{Fore.BLUE}{game_data.title}{Fore.RED} © {game_data.year} {game_data.publisher}. All Rights Reserved.")
+        os.abort()
     else:
-        player = create_character()
+        sfx_thread = threading.Thread(target=play_sfx(os.path.join("sfx", "newgame.mp3")))
+        sfx_thread.start()
+        player = create_character(game_data)
+
+
     # Main game flow
     while True:
+        pygame.mixer.music.stop()
         clear_console()
         print(Fore.YELLOW + f"You are in {player.location}.")
         location = game_data.locations.get(player.location, {})
@@ -482,26 +512,41 @@ def game():
         elif choice == 'Save Game':
             save_game(player)
         elif choice == 'Quit':
-            print(Fore.RED + "Thank you for playing!")
-            break
+            game(game_data)
 
-def create_character():
+
+
+def print_titlebar(size="normal", title="MENU", color=Fore.WHITE, style=Style.NORMAL,):
+    if size == "small":
+        print(f"{color}══════════════ {title} ══════════════")
+    elif size == "normal":
+        print(f"{color}══════════════════════ {title} ══════════════════════")
+    elif size == "large":
+        print(f"{color}════════════════════════════ {title} ════════════════════════════")
+
+def create_character(game_data):
+    color = Fore.GREEN
+    reset = Fore.RESET
+    input_color = Fore.CYAN
     # Character Creation
-    name = input("Enter your character's name: ")
-    gender = input("Enter your character's gender: ")
+    gender_options = list(["Male", "Female", "Non-binary"])
+    gender_selection = select_option(gender_options, f"Choose your characters {color}gender{reset}:", clear_screen=True)
+    gender = gender_selection[0]
 
     # Race selection
-    races = ['Human', 'Elf', 'Dwarf', 'Halfling', 'Orc']
-    race, _ = select_option(races, "Choose your race:")
+    race_names = list(game_data.races.keys())
+    race, _ = select_option(race_names, f"Choose your {color}race{reset}:")
 
     # Background selection
-    backgrounds = ['Noble', 'Soldier', 'Scholar', 'Criminal', 'Hermit']
-    background, _ = select_option(backgrounds, "Choose your background:")
+    background_list = list(game_data.backgrounds.keys())
+    background, _ = select_option(background_list, f"Choose your characters {color}background{reset}:")
 
     # Class selection
-    classes = ['Fighter', 'Rogue', 'Wizard', 'Cleric', 'Ranger']
-    char_class, _ = select_option(classes, "Choose your class:")
+    classes_list = list(game_data.classes.keys())
+    char_class, _ = select_option(classes_list, f"Choose your {color}class{reset}:")
 
+    clear_console()
+    name = input(f"  {Fore.YELLOW}Enter your character's {color}name{reset}:{input_color} ")
     # Initialize character without attributes
     player = Character(name, race, gender, background, char_class)
 
@@ -514,6 +559,7 @@ def create_character():
             player.max_health = player.calculate_max_health()
             player.health = player.max_health
             player.show_stats()
+            print()
             choice, _ = select_option(['Accept these stats', 'Reroll'], "Do you want to keep these stats?", clear_screen=False)
             if choice == 'Accept these stats':
                 break
@@ -523,25 +569,61 @@ def create_character():
         player.max_health = player.calculate_max_health()
         player.health = player.max_health
         player.show_stats()
-        input("\nPress Enter to continue...")
+        input("Press Enter to continue...")
 
     print(Fore.GREEN + "\nCharacter created successfully!")
     player.show_stats()
     input("\nPress Enter to continue...")
     return player
+def play_music(music_name):
+    pygame.mixer.init()
+    pygame.mixer.music.load(music_name)
+    pygame.mixer.music.play()
+def play_sfx(sfx_path, delay=0):
+    sound = pygame.mixer.Sound(sfx_path)
+    time.sleep(delay)
+    sound.play()
+
 
 # Title Screen
 def display_title_screen():
+    gamedata = GameData()
+    sfx_thread = threading.Thread(target=play_sfx(os.path.join("sfx", "title.mp3"), 2))
+    sfx_thread.start()
+    
     clear_console()
-    print(Fore.YELLOW + "========================================")
-    print(Fore.CYAN + "          Legends of the Realm")
-    print(Fore.CYAN + "             Version 0.11")
-    print(Fore.YELLOW + "========================================\n")
-    input("Press Enter to start your adventure...")
-
+    print(Fore.YELLOW + """
+                 ██╗     ███████╗ ██████╗ ███████╗███╗   ██╗██████╗ ███████╗
+                 ██║     ██╔════╝██╔════╝ ██╔════╝████╗  ██║██╔══██╗██╔════╝
+                 ██║     █████╗  ██║  ███╗█████╗  ██╔██╗ ██║██║  ██║███████╗
+                 ██║     ██╔══╝  ██║   ██║██╔══╝  ██║╚██╗██║██║  ██║╚════██║
+                 ███████╗███████╗╚██████╔╝███████╗██║ ╚████║██████╔╝███████║
+                 ╚══════╝╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═════╝ ╚══════╝""")
+    print("""
+                                        ████▄ ▄████  
+                                        █   █ █▀   ▀ 
+                                        █   █ █▀▀    
+                                        ▀████ █      
+                                               █     
+                                                ▀ """)
+    print(Fore.BLUE + """
+    ███        ▄█    █▄       ▄████████         ▄████████    ▄████████    ▄████████  ▄█         ▄▄▄▄███▄▄▄▄   
+▀█████████▄   ███    ███     ███    ███        ███    ███   ███    ███   ███    ███ ███       ▄██▀▀▀███▀▀▀██▄ 
+   ▀███▀▀██   ███    ███     ███    █▀         ███    ███   ███    █▀    ███    ███ ███       ███   ███   ███ 
+    ███   ▀  ▄███▄▄▄▄███▄▄  ▄███▄▄▄           ▄███▄▄▄▄██▀  ▄███▄▄▄       ███    ███ ███       ███   ███   ███ 
+    ███     ▀▀███▀▀▀▀███▀  ▀▀███▀▀▀          ▀▀███▀▀▀▀▀   ▀▀███▀▀▀     ▀███████████ ███       ███   ███   ███ 
+    ███       ███    ███     ███    █▄       ▀███████████   ███    █▄    ███    ███ ███       ███   ███   ███ 
+    ███       ███    ███     ███    ███        ███    ███   ███    ███   ███    ███ ███▌    ▄ ███   ███   ███ 
+   ▄████▀     ███    █▀      ██████████        ███    ███   ██████████   ███    █▀  █████▄▄██  ▀█   ███   █▀  
+                                               ███    ███                           ▀                         \n""")
+    
+    print(f"{Fore.YELLOW}════════════════════════════════════════════════════════════════════════════════════════════════════════════")
+    print(f"{Fore.YELLOW}       Version {Fore.BLUE}{gamedata.version}              {Fore.YELLOW}Created by {Fore.BLUE}{gamedata.developer} {gamedata.year}")
+    print(f"{Fore.YELLOW}════════════════════════════════════════════════════════════════════════════════════════════════════════════\n")
 if __name__ == "__main__":
+    game_data = GameData()
     try:
-        game()
+        game(game_data)
     except KeyboardInterrupt:
         print(Fore.RED + "\nGame exited.")
     except Exception as e:

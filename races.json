@@ -1,0 +1,48 @@
+{
+    "Human": {
+        "Name": "Human",
+        "AbilityScoreImprovements": {
+            "Strength": 1,
+            "Dexterity": 1,
+            "Constitution": 1,
+            "Intelligence": 1,
+            "Wisdom": 1,
+            "Charisma": 1
+        }
+    },
+    "Dwarf": {
+        "Name": "Dwarf",
+        "AbilityScoreImprovements": {
+            "Strength": 2,
+            "Constitution": 2
+        }
+    },
+    "Elf":{
+        "Name": "Elf",
+        "AbilityScoreImprovements": {
+            "Dexterity": 1,
+            "Intelligence": 1
+        }
+    },
+    "Gnome":{
+        "Name": "Gnome",
+        "AbilityScoreImprovements": {
+            "Dexterity": 1,
+            "Wisdom": 2
+        }
+    },
+    "Halfling": {
+        "Name": "Halfling",
+        "AbilityScoreImprovements": {
+            "Dexterity": 2,
+            "Charisma": 1
+        }
+    },
+    "Orc": {
+        "Name": "Orc",
+        "AbilityScoreImprovements": {
+            "Strength": 2,
+            "Constitution": 1
+        }
+    }
+}

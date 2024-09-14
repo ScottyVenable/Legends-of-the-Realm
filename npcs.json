@@ -89,5 +89,75 @@
                 ]
             }
         ]
+    },
+    "Kiki": {
+        "name": "Kiki",
+        "role": "Potion Merchant",
+        "location": "Forest Path",
+        "dialogues": [
+            {
+                "speaker": "Kiki",
+                "text": "Need something? I gotta potion for that!",
+                "options": [
+                    {
+                        "text": "Potions? What kind of potions?",
+                        "action": "inquire",
+                        "next_dialogue": {
+                            "speaker": "Kiki",
+                            "text": "Well, you'll have to take a look silly!",
+                            "options": [
+                                {
+                                    "text": "Sure. I'll see what you got",
+                                    "action": "see_wares",
+                                    "next_dialogue": {
+                                        "speaker": "Kiki",
+                                        "text": "Great! You won't be disappointed!",
+                                        "options": [
+                                        ]
+                                    }
+                                },
+                                {
+                                    "text": "No thanks... I'll pass.",
+                                    "action": "leave",
+                                    "next_dialogue": {
+                                        "speaker": "Kiki",
+                                        "text": "Boo! I'm disappointed!",
+                                        "options": [
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "text": "I'll take a look at what you got!",
+                        "action": "see_wares",
+                        "next_dialogue": {
+                            "speaker": "Kiki",
+                            "text": "You won't be disappointed!",
+                            "options": []
+                        }
+                    },
+                    {
+                        "text": "I'm just browsing.",
+                        "action": "browsing",
+                        "next_dialogue": {
+                            "speaker": "Merchant",
+                            "text": "Take all the time you need!",
+                            "options": []
+                        }
+                    },
+                    {
+                        "text": "I need to leave.",
+                        "action": "leave_shop",
+                        "next_dialogue": {
+                            "speaker": "Kiki",
+                            "text": "You'll be back...",
+                            "options": []
+                        }
+                    }
+                ]
+            }
+        ]
     }
 }

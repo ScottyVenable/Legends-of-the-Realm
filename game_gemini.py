@@ -1,3 +1,5 @@
+### This is code that was created with help from Google Gemini
+### 
 import random
 import time
 import os
