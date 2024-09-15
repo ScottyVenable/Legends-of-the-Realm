@@ -1,0 +1,83 @@
+{
+    "Elder": [
+        {
+            "id": 0,
+            "text": "Greetings, traveler. What brings you to our village?",
+            "responses": [
+                {"text": "Ask about the village history.", "next_id": 1},
+                {"text": "Offer to help with any tasks.", "next_id": 2},
+                {"text": "Say goodbye.", "next_id": -1}
+            ]
+        },
+        {
+            "id": 1,
+            "text": "Our village has a rich history dating back centuries...",
+            "responses": [{"text": "Back to main conversation.", "next_id": 0}]
+        },
+        {
+            "id": 2,
+            "text": "Actually, we could use some assistance with a task...",
+            "responses": [{"text": "Back to main conversation.", "next_id": 0}]
+        }
+    ],
+    
+    "Merchant": [
+        {
+            "id": 0,
+            "text": "Welcome, traveler! What can I offer you today?",
+            "responses": [
+                {"text": "Show me your wares.", "next_id": 1},
+                {"text": "I'm just browsing.", "next_id": 2},
+                {"text": "I need to leave.", "next_id": -1}
+            ]
+        },
+        {
+            "id": 1,
+            "text": "Certainly! Take a look at my inventory.",
+            "action": "show_wares"
+        },
+        {
+            "id": 2,
+            "text": "No problem, take your time.",
+            "action": "browsing"
+        },
+        {
+            "id": -1,
+            "text": "Come back anytime!",
+            "action": "leave_shop"
+        }
+    ],
+
+    "Kiki": [
+        {
+            "id": 0,
+            "text": "Need something? I gotta potion for that!",
+            "responses": [
+                {"text": "Potions? What kind of potions?", "next_id": 1},
+                {"text": "I'll take a look at what you got!", "next_id": 2},
+                {"text": "I'm just browsing.", "next_id": 3},
+                {"text": "I need to leave.", "next_id": -1}
+            ]
+        },
+        {
+            "id": 1,
+            "text": "Well, you'll have to take a look silly!",
+            "action": "see_wares"
+        },
+        {
+            "id": 2,
+            "text": "You won't be disappointed!",
+            "action": "see_wares"
+        },
+        {
+            "id": 3,
+            "text": "Take all the time you need!",
+            "action": "browsing"
+        },
+        {
+            "id": -1,
+            "text": "You'll be back...",
+            "action": "leave_shop"
+        }
+    ]
+}

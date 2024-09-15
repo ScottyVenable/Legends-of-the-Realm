@@ -48,7 +48,8 @@
                     }
                 ]
             }
-        ]
+        ],
+        "default_relationship": 5
     },
     "Merchant": {
         "name": "Merchant",
@@ -56,39 +57,42 @@
         "location": "Brightwood Village",
         "dialogues": [
             {
-                "speaker": "Merchant",
-                "text": "Welcome, traveler! What can I offer you today?",
-                "options": [
-                    {
-                        "text": "Show me your wares.",
-                        "action": "show_wares",
-                        "next_dialogue": {
-                            "speaker": "Merchant",
-                            "text": "Certainly! Take a look at my inventory.",
-                            "options": []
+                "greeting": {
+                    "speaker": "Merchant",
+                    "text": "Welcome, traveler! What can I offer you today?",
+                    "options": [
+                        {
+                            "text": "Show me your wares.",
+                            "action": "show_wares",
+                            "next_dialogue": {
+                                "speaker": "Merchant",
+                                "text": "Certainly! Take a look at my inventory.",
+                                "options": []
+                            }
+                        },
+                        {
+                            "text": "I'm just browsing.",
+                            "action": "browsing",
+                            "next_dialogue": {
+                                "speaker": "Merchant",
+                                "text": "No problem, take your time.",
+                                "options": []
+                            }
+                        },
+                        {
+                            "text": "I need to leave.",
+                            "action": "leave_shop",
+                            "next_dialogue": {
+                                "speaker": "Merchant",
+                                "text": "Come back anytime!",
+                                "options": []
+                            }
                         }
-                    },
-                    {
-                        "text": "I'm just browsing.",
-                        "action": "browsing",
-                        "next_dialogue": {
-                            "speaker": "Merchant",
-                            "text": "No problem, take your time.",
-                            "options": []
-                        }
-                    },
-                    {
-                        "text": "I need to leave.",
-                        "action": "leave_shop",
-                        "next_dialogue": {
-                            "speaker": "Merchant",
-                            "text": "Come back anytime!",
-                            "options": []
-                        }
-                    }
-                ]
+                    ]
+                }
             }
-        ]
+        ],
+        "default_relationship": 0
     },
     "Kiki": {
         "name": "Kiki",
@@ -158,6 +162,7 @@
                     }
                 ]
             }
-        ]
+        ],
+        "default_relationship": 5
     }
 }

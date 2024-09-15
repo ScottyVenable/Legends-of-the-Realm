@@ -1,6 +1,14 @@
 {
     "Fighter": {
-        "name": "Fighter"
+        "name": "Fighter",
+        "abilities": {
+            "Resolve": {
+                    "description": "Use an action to instantly heal."
+            },
+            "Power Strike": {
+                
+            }
+        }
     },
     "Wizard": {
         "name": "Wizard"
