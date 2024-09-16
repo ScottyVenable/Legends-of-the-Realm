@@ -22,5 +22,16 @@
         "name": "Spellbook",
         "type": "misc",
         "price": 200
+      },
+      "Lockpick": {
+        "name": "Lockpick",
+        "type": "Tool",
+        "price": 20
+      },
+      "Shield": {
+        "name": "Shield",
+        "type": "armor",
+        "price": 50,
+        "ac_bonus": 2
       }
 }

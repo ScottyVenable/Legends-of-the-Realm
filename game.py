@@ -1,5 +1,6 @@
 from enum import Enum
 import random
+import shutil
 import time
 import os
 import json
@@ -7,6 +8,8 @@ from colorama import init, Fore, Style
 import pygame
 import threading
 import sys
+from tabulate import tabulate
+from prettytable import PrettyTable, MARKDOWN, SINGLE_BORDER, DOUBLE_BORDER, DEFAULT, PLAIN_COLUMNS, MSWORD_FRIENDLY, FRAME, RANDOM
 
 # Initialize colorama
 init(autoreset=True)
@@ -87,6 +90,7 @@ class GameData:
 
         self.DeveloperModeEnabled = self.settings.get('Developer Mode', False)
 
+    
 
     def load_data(self, filename):
         try:
@@ -329,25 +333,43 @@ class Character:
         else:
             print(Fore.RED + "That location does not exist.")
 
-    def show_inventory(self):
-        clear_console()
-        print_titlebar("normal", "INVENTORY", Fore.YELLOW)
+    def show_inventory_table(self):
+        clear_console()  # Assuming you have this function defined
+        print_titlebar("normal", "INVENTORY", Fore.YELLOW)  # Assuming you have this function defined
+
         if not self.inventory:
             print(Fore.RED + "Your inventory is empty.")
             input("\nPress Enter to continue...")
             return
+
+        # Prepare data for the table
+        inventory_data = []
         for idx, item in enumerate(self.inventory):
             item_type = item.get('type', 'Unknown')
-            print(f"{idx + 1}. {Fore.LIGHTGREEN_EX}{item['name']} {Fore.RESET}-- {Fore.BLUE}[{str(item_type).upper()}]{Fore.RESET}")
+            inventory_data.append([idx + 1, item['name'], str(item_type).upper()])
+
+        # Create and print the table
+        table = Tools.make_table(
+            data=inventory_data,
+            field_names=["#", "Item Name", "Type"],
+            align="l",
+            vrules=FRAME,
+        )
+        table.min_width = 1
+        table.max_table_width = Tools.get(Tools.Values.CONSOLE_WIDTH) - 3
+        table.min_table_width = 50
+        print(table)
+
+        # Get user input
         print(f"{len(self.inventory) + 1}. {Fore.RED}Back{Fore.RESET}")
         choice = input("\nSelect an item to use or equip, or press the number for 'Back': ")
         if choice.isdigit():
             choice = int(choice)
             if 1 <= choice <= len(self.inventory):
                 selected_item = self.inventory[choice - 1]
-                self.use_item(selected_item)
+                self.use_item(selected_item)  # Assuming you have this function defined
             else:
-                return
+                return  # Go back
         else:
             print(Fore.RED + "Invalid input.")
             time.sleep(1)
@@ -370,6 +392,75 @@ class Dialogue:
         self.text = text  # The dialogue text displayed by the NPC
         self.responses = responses if responses is not None else []
         self.action = action  # Optional function to execute when this dialogue is reached
+
+class Tools:
+    class Values:
+        CONSOLE_WIDTH = 0
+
+    def get(type):
+        if type == Tools.Values.CONSOLE_WIDTH:
+            console_width = shutil.get_terminal_size().columns
+            return console_width
+        
+    def make_table(data, title="", field_names=None, align="l", style=SINGLE_BORDER, title_color=Fore.RESET, vrules=None, hrules=None, sortby=None, reversesort=False, min_width=10, max_width=20):
+        """
+        Creates a formatted table using PrettyTable.
+
+        Args:
+            title (str): The title of the table.
+            data (list of lists or dict): The data to display in the table.
+            field_names (list, optional): Column names for the table. If not provided,
+                                        keys from the first item in data (if a dict)
+                                        or range(len(data[0])) (if a list of lists)
+                                        will be used.
+            align (str, optional): Alignment for all columns ("l" for left, "r" for right, "c" for center).
+            vrules (str, optional): Vertical rules style ("FRAME", "ALL", "NONE").
+            hrules (str, optional): Horizontal rules style ("FRAME", "ALL", "NONE").
+            sortby (str, optional): Column name to sort the table by.
+            reversesort (bool, optional): Reverse the sorting order if True.
+
+        Returns:
+            PrettyTable: The formatted table object.
+        """
+
+        max_width = Tools.get(Tools.Values.CONSOLE_WIDTH) - 4
+        table = PrettyTable()
+
+        # Set column names
+        if field_names:
+            table.field_names = field_names
+        elif isinstance(data, dict) and data:
+            table.field_names = list(data.keys())
+        elif isinstance(data, list) and data and isinstance(data[0], list):
+            table.field_names = [str(i) for i in range(len(data[0]))]  # Default to numeric column names
+
+        # Add rows
+        if isinstance(data, dict):
+            table.add_row(data.values())
+        else:
+            for row in data:
+                table.add_row(row)
+
+        # Apply formatting
+        table.align = align
+        if vrules:
+            table.vrules = getattr(PrettyTable, vrules)
+        if hrules:
+            table.hrules = getattr(PrettyTable, hrules)
+        if sortby:
+            table.sortby = sortby
+            table.reversesort = reversesort
+        if title:
+            table.title = f"{title_color}{title}{Fore.RESET}"
+        if style:
+            table.set_style(style)
+        if max_width:
+            table.max_width = max_width
+        if min_width:
+            table.min_width = min_width
+
+
+        return table
 
 
 # NPC Class
@@ -459,10 +550,10 @@ class Shop:
         while True:
             clear_console()
             print(Fore.YELLOW + "\nWelcome to the shop!")
-            print(Fore.YELLOW + f"You have {player.gold} gold.")
+            print(Fore.YELLOW + f"You have {Fore.CYAN}{player.gold}{Fore.YELLOW} gold.")
             print("\nAvailable items:")
             for idx, item in enumerate(self.items):
-                print(f"{idx + 1}. {item.name} - {item.price} gold")
+                print(f"{idx + 1}. {Fore.BLUE}{item.name}{Fore.RESET} - {Fore.YELLOW}{item.price} gold{Fore.RESET}")
             print(f"{len(self.items) + 1}. Exit shop")
             choice = input("\nWhat would you like to buy? Enter the item number: ")
             if choice.isdigit():
@@ -489,36 +580,41 @@ class Shop:
                 time.sleep(1)
 
 # Battle System
-def battle(player, enemy):
+def battle(player: Character, enemy: Enemy):
     # Enhanced battle system with equipment and abilities
     while enemy.is_alive() and player.health > 0:
         clear_console()
-        print(Fore.RED + f"\nYou are battling a {enemy.name}!")
-        print(f"\nYour Health: {player.health}/{player.max_health}")
-        print(f"{enemy.name} Health: {enemy.health}")
+        print(Fore.YELLOW + f"\nYou are battling a {Fore.RED}{enemy.name}{Fore.RESET}!")
+        print(f"\n{Fore.RED}HP: {player.health}/{player.max_health}{Fore.RESET}")
         player_ac = 10 + player.modifiers['Dexterity']
         if player.equipped_armor:
             player_ac += player.equipped_armor.get('ac_bonus', 0)
-        print(f"Your AC: {player_ac}")
+        print(f"{Fore.BLUE}AC: {player_ac}{Fore.RESET}")
+
+        print(f"\n{enemy.name} Health: {enemy.health}\n")
+
         options = ['Attack', 'Use Ability', 'Use Item', 'Run']
         action, _ = select_option(options, "Choose your action:", clear_screen=False, player_send=player)
         if action == 'Attack':
             attack_roll = random.randint(1, 20) + player.modifiers['Strength']
             if player.equipped_weapon:
                 attack_roll += player.equipped_weapon.get('attack_bonus', 0)
+            time.sleep(1)
             print(f"\nYou rolled an attack of {attack_roll} vs Enemy AC {enemy.ac}")
             if attack_roll >= enemy.ac:
                 damage_roll = player.equipped_weapon.get('damage', '1d4') if player.equipped_weapon else '1d4'
                 damage = roll_damage(damage_roll) + player.modifiers['Strength']
                 enemy.health -= damage
+                time.sleep(1)
                 print(Fore.GREEN + f"You hit the {enemy.name} for {damage} damage!")
             else:
+                time.sleep(1)
                 print(Fore.RED + "Your attack missed!")
         elif action == 'Use Ability':
             # Implement abilities based on class
             use_ability(player, enemy)
         elif action == 'Use Item':
-            player.show_inventory()
+            player.show_inventory_table()
         elif action == 'Run':
             run_chance = random.randint(1, 20) + player.modifiers['Dexterity']
             if run_chance > 10:
@@ -529,21 +625,43 @@ def battle(player, enemy):
                 print(Fore.RED + "You failed to escape!")
         # Enemy's turn
         if enemy.is_alive():
+            print()
+            time.sleep(1)
+            print_titlebar("normal", f"{Fore.RED}{enemy.name.upper()} TURN{Fore.YELLOW}", Fore.YELLOW)
             enemy_attack_roll = random.randint(1, 20) + enemy.attack_bonus
+            time.sleep(1)
             print(f"\n{Fore.RED}{enemy.name}{Fore.RESET} attacks with a roll of {Fore.GREEN}{enemy_attack_roll}{Fore.RESET} vs Your {Fore.BLUE}AC {player_ac}{Fore.RESET}")
             if enemy_attack_roll >= player_ac:
                 enemy_damage = roll_damage(enemy.damage)
                 player.adjust_health(-enemy_damage)
-                print(Fore.RED + f"{enemy.name} hits you for {enemy_damage} damage!")
+                time.sleep(1)
+                print(Fore.RED + f"{enemy.name}{Fore.RESET} hits you for {Fore.RED}{enemy_damage} damage!{Fore.RESET}")
             else:
+                time.sleep(1)
                 print(Fore.GREEN + f"{enemy.name}'s attack missed!")
             input("\nPress Enter to continue...")
 
     if player.health <= 0:
-        print(Fore.RED + "You have been defeated!")
-        input("Press Enter to continue...")
+        clear_console()
+        print(Fore.RED + """
+          ▄████  ▄▄▄       ███▄ ▄███▓▓█████     ▒█████   ██▒   █▓▓█████  ██▀███  
+         ██▒ ▀█▒▒████▄    ▓██▒▀█▀ ██▒▓█   ▀    ▒██▒  ██▒▓██░   █▒▓█   ▀ ▓██ ▒ ██▒
+        ▒██░▄▄▄░▒██  ▀█▄  ▓██    ▓██░▒███      ▒██░  ██▒ ▓██  █▒░▒███   ▓██ ░▄█ ▒
+        ░▓█  ██▓░██▄▄▄▄██ ▒██    ▒██ ▒▓█  ▄    ▒██   ██░  ▒██ █░░▒▓█  ▄ ▒██▀▀█▄  
+        ░▒▓███▀▒ ▓█   ▓██▒▒██▒   ░██▒░▒████▒   ░ ████▓▒░   ▒▀█░  ░▒████▒░██▓ ▒██▒
+         ░▒   ▒  ▒▒   ▓▒█░░ ▒░   ░  ░░░ ▒░ ░   ░ ▒░▒░▒░    ░ ▐░  ░░ ▒░ ░░ ▒▓ ░▒▓░
+          ░   ░   ▒   ▒▒ ░░  ░      ░ ░ ░  ░     ░ ▒ ▒░    ░ ░░   ░ ░  ░  ░▒ ░ ▒░
+        ░ ░   ░   ░   ▒   ░      ░      ░      ░ ░ ░ ▒       ░░     ░     ░░   ░ 
+              ░       ░  ░       ░      ░  ░       ░ ░        ░     ░  ░   ░     
+                                                     ░                   
+\n\n""")
+        time.sleep(2)
+        input("Press Enter to quit...")
+        sys.exit()
+        
         # Handle player defeat (e.g., game over, respawn)
     elif not enemy.is_alive():
+        time.sleep(2)
         print(Fore.GREEN + f"You defeated the {enemy.name}!")
         player.exp += enemy.level * 10
         player.gold += enemy.gold
@@ -600,7 +718,7 @@ def use_ability(player, enemy):
                 hits += 1
         print(Fore.GREEN + f"You used Multi-Shot and hit {hits} times!")
 
-def roll_damage(damage_str):
+def roll_damage(damage_str: str):
     # Parses damage strings like '2d6' and returns the total damage
     num, die = damage_str.split('d')
     total = sum(random.randint(1, int(die)) for _ in range(int(num)))
@@ -619,7 +737,7 @@ class Game:
             input(Fore.RED + "Command not recognized. Press any key to continue.")
 
             # Main Game Loop
-    def game(gamedata):
+    def game(self, gamedata):
         game_data = gamedata
         music_thread = threading.Thread(target=play_music, args=("music.mp3",))
         music_thread.start()
@@ -653,7 +771,7 @@ class Game:
             choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
             if choice == 'Visit Shop':
                 # Open shop
-                shop = Shop(game_data)
+                shop = Shop(game_data, player)
                 shop.open_shop(player, game_data)
                 sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "shop.mp3"),))
                 sfx_thread.start()
@@ -678,7 +796,8 @@ class Game:
                         battle(player, enemy)
             elif choice == 'Check Inventory':
                 # Manage inventory
-                player.show_inventory()
+                player.show_inventory_table()
+                # player.show_inventory()
             elif choice == 'View Stats':
                 player.show_stats()
                 input("\nPress Enter to continue...")
@@ -809,22 +928,39 @@ if __name__ == "__main__":
     game_object = Game()
     try:
         if game_data.DeveloperModeEnabled:
-            print(Fore.CYAN + f"Developer mode: {Fore.GREEN}ENABLED{Fore.RESET}.")
+            clear_console()
+            print(Fore.CYAN + f"Developer mode: {Fore.GREEN}ENABLED{Fore.RESET}")
+            print(Fore.CYAN + f"Loading data...{Fore.RESET}\n\n")
             time.sleep(2)
-            print(Fore.YELLOW + "\n========= NPCS LOADED =========")
+
+            npc_names = []
+            npc_roles = []
+            npc_types = []
+            npc_locations = []
+
+            # Add all the NPC data to their categories Names, Roles, Locations
             for npc_data in game_data.npcs:
                 npc = game_data.npcs[npc_data]
-                name = npc['name']
-                location = npc['location']
-                role = npc["role"]
+                npc_names.append(f"{Fore.BLUE}{npc['name']}{Fore.RESET}")
+                npc_roles.append(f"{Fore.LIGHTRED_EX}{npc['role']}{Fore.RESET}")
+                npc_types.append(f"{Fore.LIGHTYELLOW_EX}{npc['type']}{Fore.RESET}")
+                npc_locations.append(f"{Fore.GREEN}{npc['location']}{Fore.RESET}")
 
-# v1            print(f"    {Fore.BLUE}{name}{Fore.RESET} the {Fore.CYAN}{role}{Fore.RESET} from {Fore.GREEN}{location}{Fore.RESET}")
-# v2            print(f"    {Fore.CYAN}{role}{Fore.RESET} {Fore.BLUE}{name}{Fore.RESET} from {Fore.GREEN}{location}{Fore.RESET}")
-                
-                print(f"    {Fore.BLUE}{name}{Fore.RESET}   {Fore.LIGHTRED_EX}({role}){Fore.RESET}      from {Fore.GREEN}'{location}'{Fore.RESET}")
-                time.sleep(0.5)
-            time.sleep(5)
-            input(f"{Fore.YELLOW}press any key to continue...")
+            npc_table = PrettyTable()
+            npc_table.title = f"{Fore.YELLOW}NPCs{Fore.RESET}"
+            npc_table.border = True
+            npc_table.add_column("Name", npc_names)
+            npc_table.add_column("Type", npc_types)
+            npc_table.add_column("Role", npc_roles)
+            npc_table.add_column("Location", npc_locations)
+
+            npc_table.set_style(DOUBLE_BORDER)
+            npc_table.align = "l"
+            npc_table.sortby = "Type"
+
+
+            print(npc_table)
+            input(f"{Fore.YELLOW}\npress any key to continue...")
                 
             
         game_object.game(game_data)

@@ -5,7 +5,7 @@
         "health": 15,
         "ac": 11,
         "attack_bonus": 3,
-        "damage": 5,
+        "damage": "2d6",
         "gold": 50
       },
       "Bandit": {
@@ -14,7 +14,7 @@
         "health": 20,
         "ac": 12,
         "attack_bonus": 4,
-        "damage": 6,
+        "damage": "1d6",
         "gold": 75
       },
       "Ancient Dragon": {
@@ -23,7 +23,7 @@
         "health": 35,
         "ac": 15,
         "attack_bonus": 7,
-        "damage": 12,
+        "damage": "1d12",
         "gold": 500
       }
 }

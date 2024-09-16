@@ -1,6 +1,8 @@
 {
     "Elder": {
-        "name": "Elder",
+        "id": 1,
+        "name": "Elder Kita",
+        "type": "Political Figure",
         "role": "Village Elder",
         "location": "Brightwood Village",
         "dialogues": [
@@ -52,7 +54,9 @@
         "default_relationship": 5
     },
     "Merchant": {
-        "name": "Merchant",
+        "id": 2,
+        "name": "Clement Bugbee",
+        "type": "Merchant",
         "role": "Shopkeeper",
         "location": "Brightwood Village",
         "dialogues": [
@@ -95,7 +99,9 @@
         "default_relationship": 0
     },
     "Kiki": {
+        "id": 3,
         "name": "Kiki",
+        "type": "Merchant",
         "role": "Potion Merchant",
         "location": "Forest Path",
         "dialogues": [
