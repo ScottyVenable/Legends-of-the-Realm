@@ -1,3 +1,4 @@
+from enum import Enum
 import random
 import time
 import os
@@ -14,7 +15,8 @@ init(autoreset=True)
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_screen=True):
+def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_screen=True, player_send=None):
+    player = player_send
     while True:
         if clear_screen:
             clear_console()
@@ -30,6 +32,13 @@ def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_s
                 return options[index], index
             else:
                 print(Fore.RED + "Invalid choice. Please select a valid option.\n")
+                time.sleep(1)
+                input(f"{Fore.BLUE}Press any key to continue...")
+        elif choice.startswith("/"):
+            if player != None:
+                parse_command(choice, player_send=player)
+            else:
+                print(Fore.RED + "Invalid code. No player identified!")
                 time.sleep(1)
         else:
             print(Fore.RED + "Invalid input. Please enter a number.\n")
@@ -67,12 +76,17 @@ class GameData:
         self.backgrounds = self.load_data("backgrounds.json")
         self.classes = self.load_data("classes.json")
         self.game_info = self.load_data("gameinfo.json")
+        self.settings = self.load_data("settings.json")
+
         
         self.title = self.game_info.get('Name', 'Game Title')
         self.version = self.game_info.get('Version', '1.0')
         self.year = self.game_info.get('CopyrightYear', '2023')
         self.publisher = self.game_info.get('Publisher', 'Game Publisher')
         self.developer = self.game_info.get('Developer', 'Game Developer')
+
+        self.DeveloperModeEnabled = self.settings.get('Developer Mode', False)
+
 
     def load_data(self, filename):
         try:
@@ -323,8 +337,9 @@ class Character:
             input("\nPress Enter to continue...")
             return
         for idx, item in enumerate(self.inventory):
-            print(f"{idx + 1}. {item['name']} - {item.get('type', 'Unknown')}")
-        print(f"{len(self.inventory) + 1}. Back")
+            item_type = item.get('type', 'Unknown')
+            print(f"{idx + 1}. {Fore.LIGHTGREEN_EX}{item['name']} {Fore.RESET}-- {Fore.BLUE}[{str(item_type).upper()}]{Fore.RESET}")
+        print(f"{len(self.inventory) + 1}. {Fore.RED}Back{Fore.RESET}")
         choice = input("\nSelect an item to use or equip, or press the number for 'Back': ")
         if choice.isdigit():
             choice = int(choice)
@@ -406,6 +421,8 @@ class Database:
     for npc_name, npc_data in gamedata.npcs.items():
         NPCs[npc_name] = NPC(npc_data)
 
+
+
 # Enemy Class
 class Enemy:
     def __init__(self, enemy_data):
@@ -434,7 +451,7 @@ class Item:
 
 # Shop Class
 class Shop:
-    def __init__(self, game_data):
+    def __init__(self, game_data, player):
         self.items = [Item(item_data) for item_data in game_data.items.values()]
         self.gamedata = game_data
 
@@ -484,7 +501,7 @@ def battle(player, enemy):
             player_ac += player.equipped_armor.get('ac_bonus', 0)
         print(f"Your AC: {player_ac}")
         options = ['Attack', 'Use Ability', 'Use Item', 'Run']
-        action, _ = select_option(options, "Choose your action:", clear_screen=False)
+        action, _ = select_option(options, "Choose your action:", clear_screen=False, player_send=player)
         if action == 'Attack':
             attack_roll = random.randint(1, 20) + player.modifiers['Strength']
             if player.equipped_weapon:
@@ -589,75 +606,92 @@ def roll_damage(damage_str):
     total = sum(random.randint(1, int(die)) for _ in range(int(num)))
     return total
 
-# Main Game Loop
-def game(gamedata):
-    game_data = gamedata
-    music_thread = threading.Thread(target=play_music, args=("music.mp3",))
-    music_thread.start()
-    display_title_screen(game_data)
-    choice, _ = select_option(['New Game', 'Load Game', 'Exit Game'], "Select an option:", clear_screen=False)
-    if choice == 'Load Game':
-        pygame.mixer.music.stop()
-        player = load_game()
-        if not player:
-            player = create_character(game_data)
-    elif choice == 'Exit Game':
-        pygame.mixer.music.stop()
-        print(Fore.RED + f"\n{Fore.BLUE}{game_data.title}{Fore.RED} © {game_data.year} {game_data.publisher}. All Rights Reserved.")
-        sys.exit()
-    else:
-        pygame.mixer.music.stop()
-        sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
-        sfx_thread.start()
-        player = create_character(game_data)
+class Game:
+    player: Character
 
-    # Main game flow
-    while True:
-        clear_console()
-        print(Fore.YELLOW + f"You are in {player.location}.")
-        location = game_data.locations.get(player.location, {})
-        options = ['Explore', 'Check Inventory', 'View Stats', 'Save Game', 'Quit']
-        if location.get('shop'):
-            options.insert(0, 'Visit Shop')
-        if location.get('npc'):
-            options.insert(0, f"Talk to {location['npc']}")
-        choice, _ = select_option(options, "What would you like to do?", clear_screen=False)
-        if choice == 'Visit Shop':
-            # Open shop
-            shop = Shop(game_data)
-            shop.open_shop(player, game_data)
-            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "shop.mp3"),))
-            sfx_thread.start()
-        elif choice.startswith('Talk to'):
-            npc_name = choice.replace('Talk to ', '')
-            npc = Database.NPCs.get(npc_name)
-            if npc:
-                npc.talk(player)
-            else:
-                print(Fore.RED + "NPC not found.")
-                input("Press Enter to continue...")
-        elif choice == 'Explore':
-            # Move to a new location
-            locations = list(game_data.locations.keys())
-            location_choice, _ = select_option(locations + ['Back'], "Where would you like to go?", clear_screen=False)
-            if location_choice != 'Back':
-                player.move_to_location(location_choice, game_data)
-                # Random encounter
-                if random.choice([True, False]):
-                    enemy_data = random.choice(list(game_data.enemies.values()))
-                    enemy = Enemy(enemy_data)
-                    battle(player, enemy)
-        elif choice == 'Check Inventory':
-            # Manage inventory
-            player.show_inventory()
-        elif choice == 'View Stats':
-            player.show_stats()
-            input("\nPress Enter to continue...")
-        elif choice == 'Save Game':
-            save_game(player)
-        elif choice == 'Quit':
-            print(Fore.RED + "Exiting game...")
+    def parse_command(user_input, player_send):
+        player: Character = player_send
+        command = str(user_input).replace("/", "")
+        command_parts = command.split(" ")
+        if command_parts[0] == "give":
+            player.inventory.append()
+        else:
+            input(Fore.RED + "Command not recognized. Press any key to continue.")
+
+            # Main Game Loop
+    def game(gamedata):
+        game_data = gamedata
+        music_thread = threading.Thread(target=play_music, args=("music.mp3",))
+        music_thread.start()
+        display_title_screen(game_data)
+        choice, _ = select_option(['New Game', 'Load Game', 'Exit Game'], "Select an option:", clear_screen=False)
+        if choice == 'Load Game':
+            pygame.mixer.music.stop()
+            player = load_game()
+            if not player:
+                player = create_character(game_data)
+        elif choice == 'Exit Game':
+            pygame.mixer.music.stop()
+            print(Fore.RED + f"\n{Fore.BLUE}{game_data.title}{Fore.RED} © {game_data.year} {game_data.publisher}. All Rights Reserved.")
             sys.exit()
+        else:
+            pygame.mixer.music.stop()
+            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
+            sfx_thread.start()
+            player = create_character(game_data)
+
+        # Main game flow
+        while True:
+            clear_console()
+            location_text = Fore.YELLOW + f"You are in {player.location}."
+            location = game_data.locations.get(player.location, {})
+            options = ['Explore', 'Check Inventory', 'View Stats', 'Save Game', 'Quit']
+            if location.get('shop'):
+                options.insert(0, 'Visit Shop')
+            if location.get('npc'):
+                options.insert(0, f"Talk to {location['npc']}")
+            choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
+            if choice == 'Visit Shop':
+                # Open shop
+                shop = Shop(game_data)
+                shop.open_shop(player, game_data)
+                sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "shop.mp3"),))
+                sfx_thread.start()
+            elif choice.startswith('Talk to'):
+                npc_name = choice.replace('Talk to ', '')
+                npc = Database.NPCs.get(npc_name)
+                if npc:
+                    npc.talk(player)
+                else:
+                    print(Fore.RED + "NPC not found.")
+                    input("Press Enter to continue...")
+            elif choice == 'Explore':
+                # Move to a new location
+                locations = list(game_data.locations.keys())
+                location_choice, _ = select_option(locations + ['Back'], "Where would you like to go?", clear_screen=False)
+                if location_choice != 'Back':
+                    player.move_to_location(location_choice, game_data)
+                    # Random encounter
+                    if random.choice([True, False]):
+                        enemy_data = random.choice(list(game_data.enemies.values()))
+                        enemy = Enemy(enemy_data)
+                        battle(player, enemy)
+            elif choice == 'Check Inventory':
+                # Manage inventory
+                player.show_inventory()
+            elif choice == 'View Stats':
+                player.show_stats()
+                input("\nPress Enter to continue...")
+            elif choice == 'Save Game':
+                save_game(player)
+            elif choice == 'Quit':
+                print(Fore.RED + "Exiting game...")
+                sys.exit()
+    
+
+
+         
+                
 
 def print_titlebar(size="normal", title="MENU", color=Fore.WHITE, style=Style.NORMAL):
     if size == "small":
@@ -772,8 +806,28 @@ def display_title_screen(game_data):
 
 if __name__ == "__main__":
     game_data = GameData()
+    game_object = Game()
     try:
-        game(game_data)
+        if game_data.DeveloperModeEnabled:
+            print(Fore.CYAN + f"Developer mode: {Fore.GREEN}ENABLED{Fore.RESET}.")
+            time.sleep(2)
+            print(Fore.YELLOW + "\n========= NPCS LOADED =========")
+            for npc_data in game_data.npcs:
+                npc = game_data.npcs[npc_data]
+                name = npc['name']
+                location = npc['location']
+                role = npc["role"]
+
+# v1            print(f"    {Fore.BLUE}{name}{Fore.RESET} the {Fore.CYAN}{role}{Fore.RESET} from {Fore.GREEN}{location}{Fore.RESET}")
+# v2            print(f"    {Fore.CYAN}{role}{Fore.RESET} {Fore.BLUE}{name}{Fore.RESET} from {Fore.GREEN}{location}{Fore.RESET}")
+                
+                print(f"    {Fore.BLUE}{name}{Fore.RESET}   {Fore.LIGHTRED_EX}({role}){Fore.RESET}      from {Fore.GREEN}'{location}'{Fore.RESET}")
+                time.sleep(0.5)
+            time.sleep(5)
+            input(f"{Fore.YELLOW}press any key to continue...")
+                
+            
+        game_object.game(game_data)
     except KeyboardInterrupt:
         print(Fore.RED + "\nGame exited.")
     except Exception as e:
