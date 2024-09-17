@@ -59,8 +59,9 @@ def load_game():
             data = json.load(f)
         player = Character("", "", "", "", "")
         player.__dict__.update(data)
+        clear_console()
         print(Fore.GREEN + "Game loaded successfully!")
-        input("Press Enter to continue...")
+        input("Press Enter to play...")
         return player
     else:
         print(Fore.RED + "No saved game found.")
@@ -129,6 +130,7 @@ class Character:
         self.set_background_attributes()
         self.health = 0
         self.max_health = 0
+        self.ac = 10
 
     def roll_attributes(self):
         attributes = {}
@@ -137,6 +139,12 @@ class Character:
             rolls.remove(min(rolls))
             attributes[attr] = sum(rolls)
         return attributes
+    
+    def get_ac(self):
+        self.ac = 10 + self.modifiers['Dexterity']
+        if self.equipped_armor:
+            self.ac += self.equipped_armor.get('ac_bonus', 0)
+        return self.ac
 
     def point_buy_attributes(self):
         attributes = {'Strength': 8, 'Dexterity': 8, 'Constitution': 8,
@@ -285,6 +293,7 @@ class Character:
         elif self.health < 0:
             self.health = 0
 
+
     def show_stats(self, clear=True):
         if clear:
             clear_console()
@@ -296,6 +305,7 @@ class Character:
         print(Fore.YELLOW + f"Background: {Fore.CYAN}{self.background}")
         print(Fore.YELLOW + f"Level: {self.level}")
         print(Fore.RED + f"Health: {self.health}/{self.max_health}")
+        print(Fore.YELLOW + f"AC: {self.ac}")
         print(Fore.YELLOW + "\nAttributes:")
         for attr, score in self.attributes.items():
             mod = self.modifiers[attr]
@@ -318,6 +328,7 @@ class Character:
             print(Fore.GREEN + f"You have equipped {item['name']}.")
         elif item['type'] == 'armor':
             self.equipped_armor = item
+            self.ac += item.get('ac_bonus', 0)
             print(Fore.GREEN + f"You have equipped {item['name']}.")
         else:
             print(Fore.RED + f"You cannot equip {item['name']}.")
@@ -463,6 +474,7 @@ class Tools:
         return table
 
 
+
 # NPC Class
 class NPC:
     def __init__(self, npc_data):
@@ -524,6 +536,8 @@ class Enemy:
         self.attack_bonus = enemy_data['attack_bonus']
         self.damage = enemy_data['damage']
         self.gold = enemy_data['gold']
+        self.locations = enemy_data['locations']
+
 
     def is_alive(self):
         return self.health > 0
@@ -554,7 +568,7 @@ class Shop:
             print("\nAvailable items:")
             for idx, item in enumerate(self.items):
                 print(f"{idx + 1}. {Fore.BLUE}{item.name}{Fore.RESET} - {Fore.YELLOW}{item.price} gold{Fore.RESET}")
-            print(f"{len(self.items) + 1}. Exit shop")
+            print(f"{len(self.items) + 1}. {Fore.RED}Exit shop{Fore.RESET}")
             choice = input("\nWhat would you like to buy? Enter the item number: ")
             if choice.isdigit():
                 choice = int(choice)
@@ -564,13 +578,14 @@ class Shop:
                         player.gold -= item.price
                         player.inventory.append(vars(item))
                         print(Fore.GREEN + f"\nYou purchased {item.name}!")
-                        input("Press Enter to continue...")
+                        time.sleep(1)
                     else:
                         print(Fore.RED + "\nYou don't have enough gold.")
                         input("Press Enter to continue...")
                 elif choice == len(self.items) + 1:
-                    print("Thank you for visiting!")
-                    time.sleep(1)
+                    clear_console()
+                    Art.come_again_soon(Fore.LIGHTYELLOW_EX)
+                    time.sleep(3)
                     break
                 else:
                     print(Fore.RED + "Invalid option.")
@@ -579,23 +594,160 @@ class Shop:
                 print(Fore.RED + "Please enter a valid option.")
                 time.sleep(1)
 
+# ASCII Art
+class Art:
+    def come_again_soon(color=Fore.YELLOW):
+        print(f"""{color}
+              
+   ____                          _               _         ____                    _ 
+  / ___|___  _ __ ___   ___     / \   __ _  __ _(_)_ __   / ___|  ___   ___  _ __ | |
+ | |   / _ \| '_ ` _ \ / _ \   / _ \ / _` |/ _` | | '_ \  \___ \ / _ \ / _ \| '_ \| |
+ | |__| (_) | | | | | |  __/  / ___ \ (_| | (_| | | | | |  ___) | (_) | (_) | | | |_|
+  \____\___/|_| |_| |_|\___| /_/   \_\__, |\__,_|_|_| |_| |____/ \___/ \___/|_| |_(_)
+                                     |___/                                                                                                                                                                                                                                                                                    
+""") 
+    def game_over(color=Fore.RED):
+        print(color + """
+          ▄████  ▄▄▄       ███▄ ▄███▓▓█████     ▒█████   ██▒   █▓▓█████  ██▀███  
+         ██▒ ▀█▒▒████▄    ▓██▒▀█▀ ██▒▓█   ▀    ▒██▒  ██▒▓██░   █▒▓█   ▀ ▓██ ▒ ██▒
+        ▒██░▄▄▄░▒██  ▀█▄  ▓██    ▓██░▒███      ▒██░  ██▒ ▓██  █▒░▒███   ▓██ ░▄█ ▒
+        ░▓█  ██▓░██▄▄▄▄██ ▒██    ▒██ ▒▓█  ▄    ▒██   ██░  ▒██ █░░▒▓█  ▄ ▒██▀▀█▄  
+        ░▒▓███▀▒ ▓█   ▓██▒▒██▒   ░██▒░▒████▒   ░ ████▓▒░   ▒▀█░  ░▒████▒░██▓ ▒██▒
+         ░▒   ▒  ▒▒   ▓▒█░░ ▒░   ░  ░░░ ▒░ ░   ░ ▒░▒░▒░    ░ ▐░  ░░ ▒░ ░░ ▒▓ ░▒▓░
+          ░   ░   ▒   ▒▒ ░░  ░      ░ ░ ░  ░     ░ ▒ ▒░    ░ ░░   ░ ░  ░  ░▒ ░ ▒░
+        ░ ░   ░   ░   ▒   ░      ░      ░      ░ ░ ░ ▒       ░░     ░     ░░   ░ 
+              ░       ░  ░       ░      ░  ░       ░ ░        ░     ░  ░   ░     
+                                                     ░                   
+\n\n""")
+
+# Game Class
+class Game:
+    player: Character
+
+    def parse_command(user_input, player_send):
+        player: Character = player_send
+        command = str(user_input).replace("/", "")
+        command_parts = command.split(" ")
+        if command_parts[0] == "give":
+            player.inventory.append()
+        else:
+            input(Fore.RED + "Command not recognized. Press any key to continue.")
+
+            # Main Game Loop
+    def game(self, gamedata):
+        game_data = gamedata
+        music_thread = threading.Thread(target=play_music, args=("music.mp3",))
+        music_thread.start()
+        display_title_screen(game_data)
+        choice, _ = select_option(['New Game', 'Load Game', 'Exit Game'], "Select an option:", clear_screen=False)
+        if choice == 'Load Game':
+            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
+            sfx_thread.start()
+            player = load_game()
+
+            if player:
+                # Play Travel Music
+                pygame.mixer.music.stop()
+                travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
+                travel_music.start()
+
+            if not player:
+                player = create_character(game_data)
+        elif choice == 'Exit Game':
+            pygame.mixer.music.stop()
+            print(Fore.RED + f"\n{Fore.BLUE}{game_data.title}{Fore.RED} © {game_data.year} {game_data.publisher}. All Rights Reserved.")
+            sys.exit()
+        else:
+        #   pygame.mixer.music.stop()
+            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
+            sfx_thread.start()
+            player = create_character(game_data)
+
+        # Main game flow
+        while True:
+            clear_console()
+            location_text = Fore.YELLOW + f"You are in {player.location}."
+            location = game_data.locations.get(player.location, {})
+            options = ['Explore', 'Check Inventory', 'View Stats', 'Save Game', 'Quit']
+            if location.get('shop'):
+                options.insert(0, 'Visit Shop')
+            if location.get('npc'):
+                options.insert(0, f"Talk to {location['npc']}")
+            choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
+            if choice == 'Visit Shop':
+                # Open shop
+                shop = Shop(game_data, player)
+                shop.open_shop(player, game_data)
+                sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "shop.mp3"),))
+                sfx_thread.start()
+            elif choice.startswith('Talk to'):
+                npc_name = choice.replace('Talk to ', '')
+                npc = Database.NPCs.get(npc_name)
+                if npc:
+                    npc.talk(player)
+                else:
+                    print(Fore.RED + "NPC not found.")
+                    input("Press Enter to continue...")
+            elif choice == 'Explore':
+                # Move to a new location
+                locations = list(game_data.locations.keys())
+                location_choice, _ = select_option(locations + ['Back'], "Where would you like to go?", clear_screen=False)
+                if location_choice != 'Back':
+                    player.move_to_location(location_choice, game_data)
+                    # Random encounter
+                    if random.choice([True, False]):
+                        possible_enemies = [
+                            enemy_data for enemy_data in game_data.enemies.values()
+                            if player.location in enemy_data['locations']
+                        ]
+                        if possible_enemies:
+                            # Randomly select an enemy from the valid ones
+                            enemy_data = random.choice(possible_enemies)
+                            enemy = Enemy(enemy_data)
+                            battle(player, enemy)
+                else:
+                    continue
+
+            elif choice == 'Check Inventory':
+                # Manage inventory
+                player.show_inventory_table()
+                # player.show_inventory()
+            elif choice == 'View Stats':
+                player.show_stats()
+                input("\nPress Enter to continue...")
+            elif choice == 'Save Game':
+                save_game(player)
+            elif choice == 'Quit':
+                print(Fore.RED + "Exiting game...")
+                sys.exit()
+    
+
 # Battle System
 def battle(player: Character, enemy: Enemy):
     # Enhanced battle system with equipment and abilities
+
+
     while enemy.is_alive() and player.health > 0:
-        clear_console()
-        print(Fore.YELLOW + f"\nYou are battling a {Fore.RED}{enemy.name}{Fore.RESET}!")
-        print(f"\n{Fore.RED}HP: {player.health}/{player.max_health}{Fore.RESET}")
-        player_ac = 10 + player.modifiers['Dexterity']
+        player.ac = player.get_ac()
+        player_ac = player.ac
         if player.equipped_armor:
             player_ac += player.equipped_armor.get('ac_bonus', 0)
-        print(f"{Fore.BLUE}AC: {player_ac}{Fore.RESET}")
+        clear_console()
+        print_titlebar("large", f"{Fore.BLUE}{player.name}{Fore.RESET}", Fore.YELLOW)
+        print(f"{Fore.BLUE}   AC: {player.ac}{Fore.RESET}")
+        print(f"{Fore.RED}   HP: ({player.health}/{player.max_health}){Fore.RESET}")
 
-        print(f"\n{enemy.name} Health: {enemy.health}\n")
+        print_titlebar("large", f"{Fore.RED}{enemy.name}{Fore.YELLOW}", Fore.YELLOW)
+        print(f"   HP: {enemy.health}\n")
 
         options = ['Attack', 'Use Ability', 'Use Item', 'Run']
+
+        # Players Turn
+        print_titlebar("large", "", Fore.YELLOW)
         action, _ = select_option(options, "Choose your action:", clear_screen=False, player_send=player)
         if action == 'Attack':
+            clear_console()
+            print_titlebar("normal", f"{Fore.CYAN}{player.name.upper()} TURN{Fore.YELLOW}", Fore.YELLOW)
             attack_roll = random.randint(1, 20) + player.modifiers['Strength']
             if player.equipped_weapon:
                 attack_roll += player.equipped_weapon.get('attack_bonus', 0)
@@ -612,17 +764,20 @@ def battle(player: Character, enemy: Enemy):
                 print(Fore.RED + "Your attack missed!")
         elif action == 'Use Ability':
             # Implement abilities based on class
+            clear_console()
             use_ability(player, enemy)
         elif action == 'Use Item':
+            clear_console()
             player.show_inventory_table()
         elif action == 'Run':
             run_chance = random.randint(1, 20) + player.modifiers['Dexterity']
             if run_chance > 10:
-                print(Fore.YELLOW + "You successfully escaped!")
+                print(Fore.GREEN + f"\nYou successfully escaped with a roll of {Fore.CYAN}{run_chance}{Fore.YELLOW}")
                 input("Press Enter to continue...")
                 return
             else:
-                print(Fore.RED + "You failed to escape!")
+                print(Fore.RED + f"\nYou failed to escape with a roll of {Fore.CYAN}{run_chance}{Fore.RESET}")
+        
         # Enemy's turn
         if enemy.is_alive():
             print()
@@ -643,29 +798,19 @@ def battle(player: Character, enemy: Enemy):
 
     if player.health <= 0:
         clear_console()
-        print(Fore.RED + """
-          ▄████  ▄▄▄       ███▄ ▄███▓▓█████     ▒█████   ██▒   █▓▓█████  ██▀███  
-         ██▒ ▀█▒▒████▄    ▓██▒▀█▀ ██▒▓█   ▀    ▒██▒  ██▒▓██░   █▒▓█   ▀ ▓██ ▒ ██▒
-        ▒██░▄▄▄░▒██  ▀█▄  ▓██    ▓██░▒███      ▒██░  ██▒ ▓██  █▒░▒███   ▓██ ░▄█ ▒
-        ░▓█  ██▓░██▄▄▄▄██ ▒██    ▒██ ▒▓█  ▄    ▒██   ██░  ▒██ █░░▒▓█  ▄ ▒██▀▀█▄  
-        ░▒▓███▀▒ ▓█   ▓██▒▒██▒   ░██▒░▒████▒   ░ ████▓▒░   ▒▀█░  ░▒████▒░██▓ ▒██▒
-         ░▒   ▒  ▒▒   ▓▒█░░ ▒░   ░  ░░░ ▒░ ░   ░ ▒░▒░▒░    ░ ▐░  ░░ ▒░ ░░ ▒▓ ░▒▓░
-          ░   ░   ▒   ▒▒ ░░  ░      ░ ░ ░  ░     ░ ▒ ▒░    ░ ░░   ░ ░  ░  ░▒ ░ ▒░
-        ░ ░   ░   ░   ▒   ░      ░      ░      ░ ░ ░ ▒       ░░     ░     ░░   ░ 
-              ░       ░  ░       ░      ░  ░       ░ ░        ░     ░  ░   ░     
-                                                     ░                   
-\n\n""")
+        Art.game_over(Fore.RED)
         time.sleep(2)
-        input("Press Enter to quit...")
         sys.exit()
         
         # Handle player defeat (e.g., game over, respawn)
     elif not enemy.is_alive():
         time.sleep(2)
         print(Fore.GREEN + f"You defeated the {enemy.name}!")
-        player.exp += enemy.level * 10
-        player.gold += enemy.gold
-        print(Fore.YELLOW + f"You gained {enemy.level * 10} experience and found {enemy.gold} gold!")
+        earned_exp = enemy.level * 10
+        enemy_gold_loot = enemy.gold * random(0.33, 1.5)
+        player.exp += earned_exp
+        player.gold += enemy_gold_loot
+        print(Fore.YELLOW + f"You gained {earned_exp} experience and found {enemy_gold_loot} gold!")
         input("Press Enter to continue...")
 
 def use_ability(player, enemy):
@@ -723,91 +868,6 @@ def roll_damage(damage_str: str):
     num, die = damage_str.split('d')
     total = sum(random.randint(1, int(die)) for _ in range(int(num)))
     return total
-
-class Game:
-    player: Character
-
-    def parse_command(user_input, player_send):
-        player: Character = player_send
-        command = str(user_input).replace("/", "")
-        command_parts = command.split(" ")
-        if command_parts[0] == "give":
-            player.inventory.append()
-        else:
-            input(Fore.RED + "Command not recognized. Press any key to continue.")
-
-            # Main Game Loop
-    def game(self, gamedata):
-        game_data = gamedata
-        music_thread = threading.Thread(target=play_music, args=("music.mp3",))
-        music_thread.start()
-        display_title_screen(game_data)
-        choice, _ = select_option(['New Game', 'Load Game', 'Exit Game'], "Select an option:", clear_screen=False)
-        if choice == 'Load Game':
-            pygame.mixer.music.stop()
-            player = load_game()
-            if not player:
-                player = create_character(game_data)
-        elif choice == 'Exit Game':
-            pygame.mixer.music.stop()
-            print(Fore.RED + f"\n{Fore.BLUE}{game_data.title}{Fore.RED} © {game_data.year} {game_data.publisher}. All Rights Reserved.")
-            sys.exit()
-        else:
-            pygame.mixer.music.stop()
-            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
-            sfx_thread.start()
-            player = create_character(game_data)
-
-        # Main game flow
-        while True:
-            clear_console()
-            location_text = Fore.YELLOW + f"You are in {player.location}."
-            location = game_data.locations.get(player.location, {})
-            options = ['Explore', 'Check Inventory', 'View Stats', 'Save Game', 'Quit']
-            if location.get('shop'):
-                options.insert(0, 'Visit Shop')
-            if location.get('npc'):
-                options.insert(0, f"Talk to {location['npc']}")
-            choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
-            if choice == 'Visit Shop':
-                # Open shop
-                shop = Shop(game_data, player)
-                shop.open_shop(player, game_data)
-                sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "shop.mp3"),))
-                sfx_thread.start()
-            elif choice.startswith('Talk to'):
-                npc_name = choice.replace('Talk to ', '')
-                npc = Database.NPCs.get(npc_name)
-                if npc:
-                    npc.talk(player)
-                else:
-                    print(Fore.RED + "NPC not found.")
-                    input("Press Enter to continue...")
-            elif choice == 'Explore':
-                # Move to a new location
-                locations = list(game_data.locations.keys())
-                location_choice, _ = select_option(locations + ['Back'], "Where would you like to go?", clear_screen=False)
-                if location_choice != 'Back':
-                    player.move_to_location(location_choice, game_data)
-                    # Random encounter
-                    if random.choice([True, False]):
-                        enemy_data = random.choice(list(game_data.enemies.values()))
-                        enemy = Enemy(enemy_data)
-                        battle(player, enemy)
-            elif choice == 'Check Inventory':
-                # Manage inventory
-                player.show_inventory_table()
-                # player.show_inventory()
-            elif choice == 'View Stats':
-                player.show_stats()
-                input("\nPress Enter to continue...")
-            elif choice == 'Save Game':
-                save_game(player)
-            elif choice == 'Quit':
-                print(Fore.RED + "Exiting game...")
-                sys.exit()
-    
-
 
          
                 

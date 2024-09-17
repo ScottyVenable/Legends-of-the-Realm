@@ -8,7 +8,7 @@
         ],
         "shop": true,
         "shop_name": "The Weary Traveler",
-        "npcs": ["Elder", "Merchant"]
+        "npcs": ["Elder Kita", "Clement Bugbee"]
       },
       "Forest Path": {
         "name": "Forest Path",

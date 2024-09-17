@@ -6,7 +6,8 @@
         "ac": 11,
         "attack_bonus": 3,
         "damage": "2d6",
-        "gold": 50
+        "gold": 50,
+        "locations": ["Forest Path", "Goblin Camp"]
       },
       "Bandit": {
         "name": "Bandit",
@@ -15,7 +16,8 @@
         "ac": 12,
         "attack_bonus": 4,
         "damage": "1d6",
-        "gold": 75
+        "gold": 75,
+        "locations": ["Forest Path", "Bandit Lair"]
       },
       "Ancient Dragon": {
         "name": "Ancient Dragon",
@@ -24,6 +26,7 @@
         "ac": 15,
         "attack_bonus": 7,
         "damage": "1d12",
-        "gold": 500
+        "gold": 500,
+        "locations": ["Mountain Pass", "Dragon's Lair"]
       }
 }
