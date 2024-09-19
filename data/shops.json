@@ -3,7 +3,9 @@
         "merchant_id": "bugbee",
         "type": "Blacksmith",
         "location": "Brightwood Village",
-        "merchant": "Clement Bugbee",
+        "merchant_name": "Clement Bugbee",
+        "merchant_greeting": "Hey there stranger! How can I help you?",
+        "merchant_goodbye": "Hey, thanks for stoppin' by!",
         "description": "The clanging of hammers and the scent of freshly-forged steel greet you as you approach \"Bugbee's Blades & Brews.\" \nA weathered sign hangs above the door, depicting a fierce, axe-wielding half-orc. \nYou've heard that Bugbee might be one of the best (and kindest) blacksmiths in Brightwood!",
         "greeting_sfx": "bugbee_greeting.mp3",
         "inventory": {

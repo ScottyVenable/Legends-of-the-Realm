@@ -70,18 +70,18 @@ def load_game():
 # Game Data
 class GameData:
     def __init__(self):
-        self.items = self.load_data("items.json")
-        self.npcs = self.load_data("npcs.json")
-        self.enemies = self.load_data("enemies.json")
-        self.quests = self.load_data("quests.json")
-        self.locations = self.load_data("locations.json")
-        self.races = self.load_data("races.json")
-        self.backgrounds = self.load_data("backgrounds.json")
-        self.classes = self.load_data("classes.json")
-        self.game_info = self.load_data("gameinfo.json")
+        self.items = self.load_data(os.path.join("data", "items.json"))
+        self.npcs = self.load_data(os.path.join("data", "npcs.json"))
+        self.enemies = self.load_data(os.path.join("data", "enemies.json"))
+        self.quests = self.load_data(os.path.join("data", "quests.json"))
+        self.locations = self.load_data(os.path.join("data", "locations.json"))
+        self.races = self.load_data(os.path.join("data", "races.json"))
+        self.backgrounds = self.load_data(os.path.join("data", "backgrounds.json"))
+        self.classes = self.load_data(os.path.join("data", "classes.json"))
+        self.game_info = self.load_data(os.path.join("data", "gameinfo.json"))
         self.settings = self.load_data("settings.json")
-        self.shops = self.load_data("shops.json")
-        self.dialogue = self.load_data("dialogues.json")
+        self.shops = self.load_data(os.path.join("data", "shops.json"))
+        self.dialogue = self.load_data(os.path.join("data", "dialogues.json"))
 
         self.title = self.game_info.get('Name', 'Game Title')
         self.version = self.game_info.get('Version', '1.0')
@@ -692,45 +692,42 @@ class Shop:
         self.items = []
         self.populate_inventory()
         self.npcs = []
+        self.player = None
 
-    def play_greeting(shop_data):
+    def play_shop_sfx(shop_data, file_name="shop_greeting"):
+        """
+        Plays a sound effect for the given shop.
+
+        Args:
+            shop_data (dict): The dictionary containing shop data (including 'merchant_id').
+            file_name (str, optional): The name of the sound file (without extension). 
+                Defaults to "shop_greeting".
+        """
         # Play Shop Greeting
-        greeting_sfx_path = os.path.join("sfx", "voiceover", shop_data['merchant_id'], "shop_greeting.mp3")
-        if os.path.exists(greeting_sfx_path):
-            play_sfx(os.path.join("sfx", "voiceover", shop_data['merchant_id'], "shop_greeting.mp3"))
+        sfx_path = os.path.join("sfx", "voiceover", shop_data.shop_data['merchant_id'], f"{file_name}.wav")
+        if os.path.exists(sfx_path):
+            play_sfx(sfx_path)
 
     def open_shop(self, player):
+        self.player = player
         self.npcs.append(self.gamedata.npcs.get("Clement Bugbee"))
-        self.play_greeting() # We can add an argument later to randomize the greeting!
+        self.merchant_name = self.shop_data['merchant_name']
+        self.merchant_greeting = self.shop_data['merchant_greeting']
+        self.merchant_goodbye = self.shop_data['merchant_goodbye']
+        self.play_shop_sfx("shop_greeting") # We can add an argument later to randomize the greeting!
 
         # Shop Loop
         while True:
             clear_console()
-            print(Fore.YELLOW + f"\nWelcome to {Fore.BLUE}{self.shop_name}{Fore.YELLOW}!")
-                # Create PrettyTable
-            table = PrettyTable()
-            table.field_names = ["#", "Item", "Price", "Quantity"]
-            table.align["Item"] = "l"  # Left align item name
-            table.align["Price"] = "l"  # Right align price
-            table.align["Quantity"] = "c"  # Right align quantity
-            table.set_style(SINGLE_BORDER)
+            
+            print_titlebar(size="large", title=f"{Fore.WHITE}Welcome to {Fore.BLUE}{self.shop_name}{Fore.YELLOW}!", color=Fore.YELLOW)
+            print(f"\n{Fore.BLUE}{self.merchant_name}: {Fore.WHITE}{self.merchant_greeting}{Fore.RESET}\n")
+            
+            self.show_shop_inventory() #Show Shops Inventory
 
-            # Populate the table
-            for idx, item in enumerate(self.items):
-                item_price = item.price
-                sale_info = ""
-                item_quantity = self.shop_data['inventory'][item.name]['quantity']
-                if self.shop_data['inventory'][item.name]['on_sale']:
-                    item_price = item.price - (item.price * (self.shop_data['inventory'][item.name]['discount'] / 100))
-                    item_price = int(item_price)
-                    sale_info = f"{Fore.GREEN}[{self.shop_data['inventory'][item.name]['discount']}% SALE] {Fore.RESET}"
-                table.add_row([idx + 1, f"{item.name}", f"{Fore.YELLOW}{item_price} gold{Fore.RESET} {sale_info}", f"{Fore.CYAN}{item_quantity}{Fore.RESET}"])
-
-            # Print the table
-            print(table)
-
-            print(f"{Fore.RED}Press {Fore.YELLOW}'{len(self.items) + 1}'{Fore.RED} to Exit shop{Fore.RESET}")
-            print(Fore.YELLOW + f"You have {Fore.CYAN}{player.gold}{Fore.YELLOW} gold.{Fore.RESET}")
+            print(f"{Fore.WHITE}Press {Fore.YELLOW}'{len(self.items) + 1}'{Fore.WHITE} to {Fore.RED}Exit shop{Fore.RESET}")
+            print(f"{Fore.WHITE}Press {Fore.YELLOW}'{len(self.items) + 2}'{Fore.WHITE} to {Fore.CYAN}Open Inventory{Fore.RESET}")
+            
             choice = input("\nWhat would you like to buy? Enter the item number: ")
             if choice.isdigit():
                 choice = int(choice)
@@ -746,7 +743,9 @@ class Shop:
                             player.inventory.append(vars(item))
                             self.shop_data['inventory'][item.name]['quantity'] -= 1  # Decrement quantity
                             print(Fore.GREEN + f"\nYou purchased {item.name}!")
-                            play_sfx(os.path.join("sfx", "voiceover", self.shop_data['id'], f"purchase{random.randint(1, 4)}.mp3"))
+                            purchase_sfx_count = self.get_purchase_sfx_count(self.shop_data['merchant_id']) # Get the number of sfxs in a folder.
+                            random_sfx_number = random.randint(1, purchase_sfx_count) # Get random sound effect.
+                            play_sfx(os.path.join("sfx", "voiceover", self.shop_data['merchant_id'], f"purchase - {random_sfx_number}.wav"))
                             input("Press Enter to continue...")
                         else:
                             print(Fore.RED + f"\nSorry, {item.name} is out of stock.")
@@ -755,11 +754,12 @@ class Shop:
                         print(Fore.RED + "\nYou don't have enough gold.")
                         input("Press Enter to continue...")
                 elif choice == len(self.items) + 1:
-                    clear_console()
-                    Art.come_again_soon(Fore.LIGHTYELLOW_EX)
-                    play_sfx(os.path.join("sfx", "voiceover", self.shop_data['id'], "shop_goodbye.mp3"))
-                    time.sleep(3)
+                    print(f"\n{Fore.BLUE}{self.merchant_name}: {Fore.WHITE}{self.merchant_goodbye}{Fore.RESET}")
+                    self.play_shop_sfx("shop_goodbye")
+                    time.sleep(2)
                     break
+                elif choice == len(self.items) + 2: #Open Players Inventory
+                    self.show_player_info(self.player)
                 else:
                     print(Fore.RED + "Invalid option.")
                     time.sleep(1)
@@ -777,6 +777,38 @@ class Shop:
                 present_npcs.append(npc_name)
         return present_npcs
 
+    def show_shop_inventory(self):
+        player = self.player
+        print_titlebar(size="normal", title=f"{Fore.BLUE}Shop Inventory{Fore.YELLOW}", color=Fore.YELLOW)
+        print(Fore.CYAN + f"\n Your Gold \n  {Fore.YELLOW}[ {player.gold} ]\n")
+
+        # Create PrettyTable
+        table = PrettyTable()
+        table.field_names = ["#", "Item", "Price", "Quantity"]
+        table.align["Item"] = "l"  # Left align item name
+        table.align["Price"] = "l"  # Right align price
+        table.align["Quantity"] = "c"  # Right align quantity
+        table.set_style(SINGLE_BORDER)
+
+        # Populate the table
+        for idx, item in enumerate(self.items):
+            item_price = item.price
+            sale_info = ""
+            item_quantity = self.shop_data['inventory'][item.name]['quantity']
+            if self.shop_data['inventory'][item.name]['on_sale']:
+                item_price = item.price - (item.price * (self.shop_data['inventory'][item.name]['discount'] / 100))
+                item_price = int(item_price)
+                sale_info = f"{Fore.GREEN}[{self.shop_data['inventory'][item.name]['discount']}% SALE] {Fore.RESET}"
+            table.add_row([idx + 1, f"{item.name}", f"{Fore.YELLOW}{item_price} gold{Fore.RESET} {sale_info}", f"{Fore.CYAN}{item_quantity}{Fore.RESET}"])
+
+                # Print the table
+        print(table)
+
+    def show_player_info(self, player: Character):
+        clear_console()
+        print_titlebar(title="Player Inventory",)
+        player.show_inventory_table()
+
     def populate_inventory(self):
         for item_name, item_data in self.shop_data['inventory'].items():
             item_data['name'] = item_name
@@ -788,6 +820,17 @@ class Shop:
     def new(gamedata, shop_name, shop_data):
         return Shop(gamedata, shop_name, shop_data)
 
+    # Get the number of files in a folder. We can change this later to be more universal.
+    def get_purchase_sfx_count(self, merchant_id):
+        """
+        Gets the number of "purchase" sound files for a given merchant.
+        """
+        sfx_dir = os.path.join("sfx", "voiceover", merchant_id)
+        purchase_files = [
+            f for f in os.listdir(sfx_dir) if f.startswith("purchase -") and f.endswith(".wav")
+        ]
+        return len(purchase_files)
+    
 class Database:
     gamedata = GameData()
     NPCs = {}
@@ -1217,12 +1260,12 @@ def create_character(game_data):
     travel_music.start()
     return player
 
-def play_music(music_name):
+def play_music(music_name, volume=0.5):
     if os.path.exists(music_name):
         pygame.mixer.init()
         pygame.mixer.music.load(music_name)
         pygame.mixer.music.play(-1)  # Loop the music
-        pygame.mixer.music.set_volume(0.5)  # Set volume to 50%
+        pygame.mixer.music.set_volume(volume)  # Set volume to 50%
         while pygame.mixer.music.get_busy() and Tools.is_music_playing:
             time.sleep(1)  # Check periodically if music should stop
         pygame.mixer.music.stop()
@@ -1230,18 +1273,20 @@ def play_music(music_name):
     else:
         print(Fore.RED + f"Music file {music_name} not found.")
 
-def play_sfx(sfx_path, delay=0):
+def play_sfx(sfx_path, delay=0, volume=1.0):
     if os.path.exists(sfx_path):
         sound = pygame.mixer.Sound(sfx_path)
         time.sleep(delay)
         sound.play()
+        sound.set_volume(volume)
     else:
         print(Fore.RED + f"Sound effect file {sfx_path} not found.")
 
 # Title Screen
-def display_title_screen(game_data):
-    sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "title.mp3"), 2))
-    sfx_thread.start()
+def display_title_screen(game_data: GameData):
+    if game_data.settings['Title SFX Enabled']:
+        sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "title.mp3"), 2))
+        sfx_thread.start()
 
     clear_console()
     print(Fore.YELLOW + """
@@ -1294,7 +1339,7 @@ if __name__ == "__main__":
                 npc_names.append(f"{Fore.BLUE}{npc['name']}{Fore.RESET}")
                 npc_roles.append(f"{Fore.LIGHTRED_EX}{npc['role']}{Fore.RESET}")
                 npc_types.append(f"{Fore.LIGHTYELLOW_EX}{npc['type']}{Fore.RESET}")
-                npc_locations.append(f"{Fore.GREEN}{npc['location']}{Fore.RESET}")
+                npc_locations.append(f"{Fore.GREEN}{npc['locations']}{Fore.RESET}")
 
             npc_table = PrettyTable()
             npc_table.title = f"{Fore.YELLOW}NPCs{Fore.RESET}"

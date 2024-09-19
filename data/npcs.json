@@ -4,7 +4,7 @@
         "name": "Elder Kita",
         "type": "Political Figure",
         "role": "Village Elder",
-        "location": "Brightwood Village",
+        "locations": ["Brightwood Village"],
         "dialogues": [
             {
                 "id": 0,
@@ -109,7 +109,7 @@
         "name": "Kiki",
         "type": "Merchant",
         "role": "Potion Merchant",
-        "location": "Forest Path",
+        "locations": ["Forest Path"],
         "dialogues": [
             {
                 "id": 0,
