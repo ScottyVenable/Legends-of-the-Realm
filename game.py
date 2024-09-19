@@ -81,6 +81,7 @@ class GameData:
         self.game_info = self.load_data("gameinfo.json")
         self.settings = self.load_data("settings.json")
         self.shops = self.load_data("shops.json")
+        self.dialogue = self.load_data("dialogues.json")
 
         self.title = self.game_info.get('Name', 'Game Title')
         self.version = self.game_info.get('Version', '1.0')
@@ -364,7 +365,7 @@ class Character:
         # Create and print the table
         table = Tools.make_table(
             data=inventory_data,
-            field_names=["#", "Item Name", "Type", "Equipped"],
+            field_names=["#", "Item Name", "Type"],
             align="l",
             vrules=FRAME,
         )
@@ -406,23 +407,42 @@ class Character:
             print("")
         else:
             clear_console()
-            play_music(os.path.join("music", "game_over.mp3"))
+            Tools.is_music_playing = False
             Art.game_over(Fore.RED)
             time.sleep(2)
-            sys.exit()
+            Tools.is_music_playing = True
+            music_thread = threading.Thread(target=play_music, args=(os.path.join("music", "game_over.mp3"),))
+            music_thread.start()
+            time.sleep(8)
+            clear_console()
+            choice = input("Would you like to continue? (Y/N): ")
+            if choice.lower == "y":
+                Game.game(GameData)
+                is_music_playing = False
+            else:
+                clear_console()
+                print("Thanks for playing!!\n")
+                is_music_playing = True
+
+                sys.exit()
         
         # Handle player defeat (e.g., game over, respawn)
         
 class Dialogue:
-    def __init__(self, text, responses=None, action=None):
-        self.text = text  # The dialogue text displayed by the NPC
+    def __init__(self, text, responses=None, action=None, id=None, speaker=None, options=[]):
+        self.text = text
         self.responses = responses if responses is not None else []
-        self.action = action  # Optional function to execute when this dialogue is reached
+        self.action = action
+        self.id = id
+        self.speaker = speaker
+        self.options = options
 
 class Tools:
     is_music_playing = True
     class Values:
         CONSOLE_WIDTH = 0
+        DIALOGUE_INTRO_GREETING = 0
+        DIALOGUE_NORMAL_GREETING = 1
 
     def get(type):
         if type == Tools.Values.CONSOLE_WIDTH:
@@ -589,50 +609,51 @@ class Tools:
             print("\nThe gods may have retreated to their celestial realms, but their influence lingers, shaping the destinies of mortals and reminding them of the delicate balance upon which existence rests.")
             time.sleep(wait_speed + 3)
 
+class Quest:
+    def accept_quest_with_reward(player, reward_amount):
+        player.gold += reward_amount  # Add the reward
+        print(Fore.GREEN + "You have accepted the quest and received 100 gold.")
+        # ... other actions (like updating quest status, etc.) ...
 
 
-
-# NPC Class
 class NPC:
-    def __init__(self, npc_data):
-        self.name = npc_data.get('name', 'Unknown')
-        self.role = npc_data.get('role', 'Unknown')
-        self.location = npc_data.get('location', 'Unknown')
-        self.relationship_score = npc_data.get('default_relationship', 0)
-        self.relationship_label = "Neutral"
-        self.dialogue_root = npc_data.get('dialogues')
+    def __init__(self, name, dialogue_data):
+        self.name = name
+        self.dialogue = dialogue_data  # Assign the dialogue data to the dialogue attribute
 
-    def talk(self, player):
-        current_dialogue = self.dialogue_root
-        while current_dialogue:
-            clear_console()
-            print(Fore.BLUE + f"{self.name}: {current_dialogue.text}\n")
-            if current_dialogue.action:
-                current_dialogue.action(player)
-            if not current_dialogue.responses:
-                break
-            for idx, response in enumerate(current_dialogue.responses):
-                print(f"{idx + 1}. {response.text}")
-            choice = input("\nEnter the number of your choice: ")
-            if choice.isdigit():
-                idx = int(choice) - 1
-                if 0 <= idx < len(current_dialogue.responses):
-                    current_dialogue = current_dialogue.responses[idx]
+    def talk(self, player, dialogue_id=0):
+        if self.dialogue[dialogue_id]:
+            current_dialogue = self.dialogue[dialogue_id]
+            while current_dialogue:
+                clear_console()
+                print(Fore.BLUE + f"{self.name}: {Fore.RESET}{current_dialogue.text}\n")
+                if current_dialogue.action:
+                    if current_dialogue.action == "accept_quest_with_reward":
+                        Quest.accept_quest_with_reward(player, 100)
+
+                if not current_dialogue.responses:
+                    break
+                for idx, response in enumerate(current_dialogue.responses):
+                    print(f"{idx + 1}. {response['text']}")
+                choice = input("\nEnter the number of your choice: ")
+                if choice.isdigit():
+                    idx = int(choice) - 1
+                    if 0 <= idx < len(current_dialogue.responses):
+                        next_id = current_dialogue.responses[idx]["next_id"]
+                        if next_id == -1:
+                            break
+                        else:
+                            current_dialogue = self.dialogue[next_id]
+                    else:
+                        print(Fore.RED + "Invalid choice.")
+                        time.sleep(1)
                 else:
-                    print(Fore.RED + "Invalid choice.")
+                    print(Fore.RED + "Invalid input. Please enter a number.")
                     time.sleep(1)
-            else:
-                print(Fore.RED + "Invalid input. Please enter a number.")
-                time.sleep(1)
-
-    # A simple relationship check
-    def check_relationship(rel_score):
-        if rel_score == 0:
-            return "Neutral"
-        elif rel_score > 0:
-            return "Positive"
+            input("press Enter to continue...")
         else:
-            return "Negative"
+            print(f"{Fore.RED} No dialogue found for ID: {dialogue_id}{Fore.RESET}")
+            time.sleep(1)
 
 # Enemy Class
 class Enemy:
@@ -664,23 +685,29 @@ class Item:
 
 # Shop Class
 class Shop:
-    def __init__(self, game_data: GameData, shop_name, shop_data):
+    def __init__(self, game_data: GameData, shop_name, shop_data, npcs=[]):
         self.gamedata = game_data
         self.shop_name = shop_name
         self.shop_data = shop_data
         self.items = []
         self.populate_inventory()
+        self.npcs = []
+
+    def play_greeting(shop_data):
+        # Play Shop Greeting
+        greeting_sfx_path = os.path.join("sfx", "voiceover", shop_data['merchant_id'], "shop_greeting.mp3")
+        if os.path.exists(greeting_sfx_path):
+            play_sfx(os.path.join("sfx", "voiceover", shop_data['merchant_id'], "shop_greeting.mp3"))
 
     def open_shop(self, player):
+        self.npcs.append(self.gamedata.npcs.get("Clement Bugbee"))
+        self.play_greeting() # We can add an argument later to randomize the greeting!
 
-        # Play Bugbee's Greeting
-        play_sfx(os.path.join("sfx", "voiceover", self.shop_data['id'], "shop_greeting.mp3"))
-        
+        # Shop Loop
         while True:
             clear_console()
             print(Fore.YELLOW + f"\nWelcome to {Fore.BLUE}{self.shop_name}{Fore.YELLOW}!")
-
-            # Create PrettyTable
+                # Create PrettyTable
             table = PrettyTable()
             table.field_names = ["#", "Item", "Price", "Quantity"]
             table.align["Item"] = "l"  # Left align item name
@@ -740,6 +767,16 @@ class Shop:
                 print(Fore.RED + "Please enter a valid option.")
                 time.sleep(1)
 
+    def get_present_npcs(self):
+        """
+        Returns a list of NPCs whose location matches the shop's name.
+        """
+        present_npcs = []
+        for npc_name, npc_data in Database.gamedata.npcs.items():
+            if self.shop_name in npc_data.get('locations', []):  # Check if shop_name is in the locations array
+                present_npcs.append(npc_name)
+        return present_npcs
+
     def populate_inventory(self):
         for item_name, item_data in self.shop_data['inventory'].items():
             item_data['name'] = item_name
@@ -756,8 +793,10 @@ class Database:
     NPCs = {}
     shops = []
     for npc_name, npc_data in gamedata.npcs.items():
-        NPCs[npc_name] = NPC(npc_data)
-    
+        # Create dialogue objects from JSON data
+        npc_data['dialogues'] = [Dialogue(**dialogue_item) for dialogue_item in npc_data['dialogues']]
+        NPCs[npc_name] = NPC(npc_name, npc_data['dialogues']) 
+
     def create_shops_from_data(self):
         shops = []
         for shop_name, shop_data in self.shops.items():
@@ -870,8 +909,7 @@ class Game:
                 
             if location.get('npcs'):
                 npcs = location.get('npcs', [])
-                for npc in npcs:
-                    options.insert(0, f"Talk to {Fore.BLUE}{npc}{Fore.RESET}")
+                options.insert(0, f"Talk to an {Fore.BLUE}NPC{Fore.RESET}")
             choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
             
             if choice.startswith(f'Visit {Fore.YELLOW}Shop{Fore.RESET}'):
@@ -887,7 +925,10 @@ class Game:
             
             
             elif choice.startswith('Talk to'):
-                npc_name = choice.replace('Talk to ', '')
+                npc_list = location.get('npcs', [])
+                choice = select_option(npc_list, "Select an NPC:")
+                if choice[0] in npc_list:
+                    npc_name = choice[0]
                 npc = Database.NPCs.get(npc_name)
                 if npc:
                     npc.talk(player)
@@ -1035,7 +1076,7 @@ def battle(player: Character, enemy: Enemy):
         time.sleep(2)
         print(Fore.GREEN + f"You defeated the {enemy.name}!")
         earned_exp = enemy.level * 10
-        enemy_gold_loot = enemy.gold * random(0.33, 1.5)
+        enemy_gold_loot = int(enemy.gold * random.uniform(0.33, 1.5))
         player.exp += earned_exp
         player.gold += enemy_gold_loot
         print(Fore.YELLOW + f"You gained {earned_exp} experience and found {enemy_gold_loot} gold!")

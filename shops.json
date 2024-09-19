@@ -1,7 +1,8 @@
 {
     "Bugbee's Blades & Brews": {
-        "id": "bugbee",
+        "merchant_id": "bugbee",
         "type": "Blacksmith",
+        "location": "Brightwood Village",
         "merchant": "Clement Bugbee",
         "description": "The clanging of hammers and the scent of freshly-forged steel greet you as you approach \"Bugbee's Blades & Brews.\" \nA weathered sign hangs above the door, depicting a fierce, axe-wielding half-orc. \nYou've heard that Bugbee might be one of the best (and kindest) blacksmiths in Brightwood!",
         "greeting_sfx": "bugbee_greeting.mp3",
@@ -22,6 +23,9 @@
                 "on_sale": true,
                 "discount": 10
             }
-        }
+        },
+    "The Thirsty Hare": {
+        "id": "thirsty_hare"
+    }
     }
 }

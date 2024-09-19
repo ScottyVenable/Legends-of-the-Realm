@@ -1,7 +1,8 @@
 {
-    "Elder": [
+    "Elder Kita": [
         {
             "id": 0,
+            "name": "intro_greeting",
             "text": "Greetings, traveler. What brings you to our village?",
             "responses": [
                 {"text": "Ask about the village history.", "next_id": 1},

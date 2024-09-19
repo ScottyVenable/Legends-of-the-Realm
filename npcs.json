@@ -1,5 +1,5 @@
 {
-    "Elder": {
+    "Elder Kita": {
         "id": 1,
         "name": "Elder Kita",
         "type": "Political Figure",
@@ -7,93 +7,99 @@
         "location": "Brightwood Village",
         "dialogues": [
             {
-                "speaker": "Elder",
+                "id": 0,
                 "text": "Greetings, traveler. We need your help to save our village from the goblin threat.",
-                "options": [
+                "responses": [
                     {
                         "text": "I will help you.",
                         "action": "accept_quest",
-                        "next_dialogue": {
-                            "speaker": "Elder",
-                            "text": "Thank you, brave soul! Our village is forever in your debt.",
-                            "options": []
-                        }
+                        "next_id": 1
                     },
                     {
                         "text": "What's in it for me?",
                         "action": "persuade_elder",
-                        "next_dialogue": {
-                            "speaker": "Elder",
-                            "text": "Very well, we can offer you 100 gold as a reward for your assistance.",
-                            "options": [
-                                {
-                                    "text": "Accept the reward and help.",
-                                    "action": "accept_quest_with_reward",
-                                    "next_dialogue": {
-                                        "speaker": "Elder",
-                                        "text": "Thank you! Your generosity will not be forgotten.",
-                                        "options": []
-                                    }
-                                }
-                            ]
-                        }
+                        "next_id": 2
                     },
                     {
                         "text": "I'm not interested.",
                         "action": "refuse_quest",
-                        "next_dialogue": {
-                            "speaker": "Elder",
-                            "text": "That's unfortunate. Farewell.",
-                            "options": []
-                        },
+                        "next_id": 3,
                         "disabled_if": "quest_persuaded"
                     }
                 ]
+            },
+            {
+                "id": 1,
+                "text": "Thank you, brave soul! Our village is forever in your debt.",
+                "action": "quest_goblin_threat",
+                "responses": []
+            },
+            {
+                "id": 2,
+                "text": "Very well, we can offer you 100 gold as a reward for your assistance.",
+                "responses": [
+                    {
+                        "text": "Accept the reward and help.",
+                        "next_id": 4
+                    }
+                ],
+                "action": "accept_quest_with_reward"
+            },
+            {
+                "id": 3,
+                "text": "That's unfortunate. Farewell.",
+                "responses": []
+            },
+            {
+                "id": 4,
+                "text": "Thank you! Your generosity will not be forgotten.",
+                "responses": []
             }
         ],
         "default_relationship": 5
     },
-    "Merchant": {
+    "Clement Bugbee": {
         "id": 2,
         "name": "Clement Bugbee",
         "type": "Merchant",
         "role": "Shopkeeper",
-        "location": "Brightwood Village",
+        "locations": ["Bugbee's Blades & Brews"],
         "dialogues": [
             {
-                "greeting": {
-                    "speaker": "Merchant",
-                    "text": "Welcome, traveler! What can I offer you today?",
-                    "options": [
-                        {
-                            "text": "Show me your wares.",
-                            "action": "show_wares",
-                            "next_dialogue": {
-                                "speaker": "Merchant",
-                                "text": "Certainly! Take a look at my inventory.",
-                                "options": []
-                            }
-                        },
-                        {
-                            "text": "I'm just browsing.",
-                            "action": "browsing",
-                            "next_dialogue": {
-                                "speaker": "Merchant",
-                                "text": "No problem, take your time.",
-                                "options": []
-                            }
-                        },
-                        {
-                            "text": "I need to leave.",
-                            "action": "leave_shop",
-                            "next_dialogue": {
-                                "speaker": "Merchant",
-                                "text": "Come back anytime!",
-                                "options": []
-                            }
-                        }
-                    ]
-                }
+                "id": 0,
+                "text": "Welcome, traveler! What can I offer you today?",
+                "responses": [
+                    {
+                        "text": "Show me your wares.",
+                        "action": "show_wares",
+                        "next_id": 1
+                    },
+                    {
+                        "text": "I'm just browsing.",
+                        "action": "browsing",
+                        "next_id": 2
+                    },
+                    {
+                        "text": "I need to leave.",
+                        "action": "leave_shop",
+                        "next_id": -1
+                    }
+                ]
+            },
+            {
+                "id": 1,
+                "text": "Certainly! Take a look at my inventory.",
+                "responses": []
+            },
+            {
+                "id": 2,
+                "text": "No problem, take your time.",
+                "responses": []
+            },
+            {
+                "id": -1,
+                "text": "Come back anytime!",
+                "responses": []
             }
         ],
         "default_relationship": 0
@@ -106,67 +112,71 @@
         "location": "Forest Path",
         "dialogues": [
             {
-                "speaker": "Kiki",
+                "id": 0,
                 "text": "Need something? I gotta potion for that!",
-                "options": [
+                "responses": [
                     {
                         "text": "Potions? What kind of potions?",
                         "action": "inquire",
-                        "next_dialogue": {
-                            "speaker": "Kiki",
-                            "text": "Well, you'll have to take a look silly!",
-                            "options": [
-                                {
-                                    "text": "Sure. I'll see what you got",
-                                    "action": "see_wares",
-                                    "next_dialogue": {
-                                        "speaker": "Kiki",
-                                        "text": "Great! You won't be disappointed!",
-                                        "options": [
-                                        ]
-                                    }
-                                },
-                                {
-                                    "text": "No thanks... I'll pass.",
-                                    "action": "leave",
-                                    "next_dialogue": {
-                                        "speaker": "Kiki",
-                                        "text": "Boo! I'm disappointed!",
-                                        "options": [
-                                        ]
-                                    }
-                                }
-                            ]
-                        }
+                        "next_id": 1
                     },
                     {
                         "text": "I'll take a look at what you got!",
                         "action": "see_wares",
-                        "next_dialogue": {
-                            "speaker": "Kiki",
-                            "text": "You won't be disappointed!",
-                            "options": []
-                        }
+                        "next_id": 3
                     },
                     {
                         "text": "I'm just browsing.",
                         "action": "browsing",
-                        "next_dialogue": {
-                            "speaker": "Merchant",
-                            "text": "Take all the time you need!",
-                            "options": []
-                        }
+                        "next_id": 4
                     },
                     {
                         "text": "I need to leave.",
                         "action": "leave_shop",
-                        "next_dialogue": {
-                            "speaker": "Kiki",
-                            "text": "You'll be back...",
-                            "options": []
-                        }
+                        "next_id": -1
                     }
                 ]
+            },
+            {
+                "id": 1,
+                "text": "Well, you'll have to take a look silly!",
+                "responses": [
+                    {
+                        "text": "Sure. I'll see what you got",
+                        "action": "see_wares",
+                        "next_id": 2
+                    },
+                    {
+                        "text": "No thanks... I'll pass.",
+                        "action": "leave",
+                        "next_id": 5
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "text": "Great! You won't be disappointed!",
+                "responses": []
+            },
+            {
+                "id": 3,
+                "text": "You won't be disappointed!",
+                "responses": []
+            },
+            {
+                "id": 4,
+                "text": "Take all the time you need!",
+                "responses": []
+            },
+            {
+                "id": 5,
+                "text": "Boo! I'm disappointed!",
+                "responses": []
+            },
+            {
+                "id": -1,
+                "text": "You'll be back...",
+                "responses": []
             }
         ],
         "default_relationship": 5
