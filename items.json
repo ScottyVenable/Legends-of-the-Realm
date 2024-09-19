@@ -4,34 +4,53 @@
         "type": "consumable",
         "price": 50,
         "effect": "heal",
-        "value": 10
+        "value": 10,
+        "rarity": "common"
       },
       "Short Sword": {
         "name": "Short Sword",
         "type": "weapon",
         "price": 100,
-        "damage": "1d6"
+        "damage": "1d6",
+        "rarity": "common"
       },
       "Leather Armor": {
         "name": "Leather Armor",
         "type": "armor",
         "price": 75,
-        "ac_bonus": 1
+        "ac_bonus": 1,
+        "rarity": "common"
       },
       "Spellbook": {
         "name": "Spellbook",
         "type": "misc",
-        "price": 200
+        "price": 200,
+        "rarity": "uncommon"
       },
       "Lockpick": {
         "name": "Lockpick",
         "type": "Tool",
-        "price": 20
+        "price": 20,
+        "rarity": "common"
       },
       "Shield": {
         "name": "Shield",
         "type": "armor",
         "price": 50,
-        "ac_bonus": 2
+        "ac_bonus": 2,
+        "rarity": "common"
+      },
+      "Wooden Bow": {
+        "name": "Wooden Bow",
+        "type": "weapon",
+        "price": 120,
+        "damage": "1d8",
+        "rarity": "common"
+      },
+      "Wooden Arrow": {
+        "name": "Wooden Arrow",
+        "type": "ammunition",
+        "price": 1,
+        "rarity": "common"
       }
 }

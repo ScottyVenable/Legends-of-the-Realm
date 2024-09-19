@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Play (Internal Console)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "game.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Play (Seperate Terminal)",
             "type": "debugpy",
             "request": "launch",

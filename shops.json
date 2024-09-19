@@ -1,0 +1,27 @@
+{
+    "Bugbee's Blades & Brews": {
+        "id": "bugbee",
+        "type": "Blacksmith",
+        "merchant": "Clement Bugbee",
+        "description": "The clanging of hammers and the scent of freshly-forged steel greet you as you approach \"Bugbee's Blades & Brews.\" \nA weathered sign hangs above the door, depicting a fierce, axe-wielding half-orc. \nYou've heard that Bugbee might be one of the best (and kindest) blacksmiths in Brightwood!",
+        "greeting_sfx": "bugbee_greeting.mp3",
+        "inventory": {
+            "Leather Armor": {
+                "quantity": 3,
+                "price": 75,
+                "on_sale": true,
+                "discount": 25
+            },
+            "Healing Potion": {
+                "quantity": 5,
+                "on_sale": false,
+                "discount": 25
+            },
+            "Short Sword": {
+                "quantity": 2,
+                "on_sale": true,
+                "discount": 10
+            }
+        }
+    }
+}

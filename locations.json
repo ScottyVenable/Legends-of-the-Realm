@@ -6,9 +6,9 @@
           "Forest Path",
           "Goblin Camp"
         ],
-        "shop": true,
-        "shop_name": "The Weary Traveler",
-        "npcs": ["Elder Kita", "Clement Bugbee"]
+        "shopPresent": true,
+        "shops": ["Bugbee's Blades & Brews"],
+        "npcs": ["Elder Kita"]
       },
       "Forest Path": {
         "name": "Forest Path",

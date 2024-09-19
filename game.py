@@ -13,7 +13,6 @@ from prettytable import PrettyTable, MARKDOWN, SINGLE_BORDER, DOUBLE_BORDER, DEF
 
 # Initialize colorama
 init(autoreset=True)
-
 # Utility Functions
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -39,7 +38,7 @@ def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_s
                 input(f"{Fore.BLUE}Press any key to continue...")
         elif choice.startswith("/"):
             if player != None:
-                parse_command(choice, player_send=player)
+                Game.parse_command(choice, player_send=player)
             else:
                 print(Fore.RED + "Invalid code. No player identified!")
                 time.sleep(1)
@@ -81,17 +80,14 @@ class GameData:
         self.classes = self.load_data("classes.json")
         self.game_info = self.load_data("gameinfo.json")
         self.settings = self.load_data("settings.json")
+        self.shops = self.load_data("shops.json")
 
-        
         self.title = self.game_info.get('Name', 'Game Title')
         self.version = self.game_info.get('Version', '1.0')
         self.year = self.game_info.get('CopyrightYear', '2023')
         self.publisher = self.game_info.get('Publisher', 'Game Publisher')
         self.developer = self.game_info.get('Developer', 'Game Developer')
-
         self.DeveloperModeEnabled = self.settings.get('Developer Mode', False)
-
-    
 
     def load_data(self, filename):
         try:
@@ -105,6 +101,8 @@ class GameData:
         except FileNotFoundError:
             print(Fore.RED + f"Error: Could not find {filename}")
             return {}
+        
+
 
 # Character Classes
 class Character:
@@ -117,6 +115,7 @@ class Character:
         self.level = 1
         self.exp = 0
         self.inventory = []
+        self.abilities = []
         self.equipped_weapon = None
         self.equipped_armor = None
         self.gold = 10  # Will be adjusted based on background
@@ -134,7 +133,7 @@ class Character:
 
     def roll_attributes(self):
         attributes = {}
-        for attr in ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma']:
+        for attr in ['Strength', 'Dexterity', 'Fortitude', 'Intelligence', 'Wisdom', 'Charisma']:
             rolls = [random.randint(1, 6) for _ in range(4)]
             rolls.remove(min(rolls))
             attributes[attr] = sum(rolls)
@@ -147,7 +146,7 @@ class Character:
         return self.ac
 
     def point_buy_attributes(self):
-        attributes = {'Strength': 8, 'Dexterity': 8, 'Constitution': 8,
+        attributes = {'Strength': 8, 'Dexterity': 8, 'Fortitude': 8,
                       'Intelligence': 8, 'Wisdom': 8, 'Charisma': 8}
         points = 27
         while points > 0:
@@ -213,6 +212,7 @@ class Character:
         }
         self.class_hp = class_hp.get(self.char_class, 8)
         self.proficiencies.extend(class_proficiencies.get(self.char_class, []))
+        self.abilities.extend(game_data.classes)
 
     def set_background_attributes(self):
         background_proficiencies = {
@@ -263,11 +263,11 @@ class Character:
         return equipment
 
     def calculate_max_health(self):
-        return self.class_hp + self.modifiers['Constitution']
+        return self.class_hp + self.modifiers['Fortitude']
 
     def level_up(self):
         self.level += 1
-        hp_increase = random.randint(1, self.class_hp) + self.modifiers['Constitution']
+        hp_increase = random.randint(1, self.class_hp) + self.modifiers['Fortitude']
         self.max_health += max(1, hp_increase)
         self.health = self.max_health
         print(Fore.YELLOW + f"\nYou have leveled up to Level {self.level}!")
@@ -305,7 +305,7 @@ class Character:
         print(Fore.YELLOW + f"Background: {Fore.CYAN}{self.background}")
         print(Fore.YELLOW + f"Level: {self.level}")
         print(Fore.RED + f"Health: {self.health}/{self.max_health}")
-        print(Fore.YELLOW + f"AC: {self.ac}")
+        print(Fore.YELLOW + f"Armor Rating: {self.ac}")
         print(Fore.YELLOW + "\nAttributes:")
         for attr, score in self.attributes.items():
             mod = self.modifiers[attr]
@@ -338,7 +338,9 @@ class Character:
             self.location = location_name
             location = game_data.locations[location_name]
             clear_console()
-            print(Fore.YELLOW + f"\nYou travel to {location['name']}.")
+
+            # Todo -- Implement Travel Mechanic to wait to travel, etc.
+            print(Fore.YELLOW + f"\nYou travel to {Fore.CYAN}{location['name']}{Fore.RESET}.")
             print(location.get('description', ''))
             input("Press Enter to continue...")
         else:
@@ -362,17 +364,18 @@ class Character:
         # Create and print the table
         table = Tools.make_table(
             data=inventory_data,
-            field_names=["#", "Item Name", "Type"],
+            field_names=["#", "Item Name", "Type", "Equipped"],
             align="l",
             vrules=FRAME,
         )
         table.min_width = 1
         table.max_table_width = Tools.get(Tools.Values.CONSOLE_WIDTH) - 3
         table.min_table_width = 50
+        table.set_style(DOUBLE_BORDER)
         print(table)
 
         # Get user input
-        print(f"{len(self.inventory) + 1}. {Fore.RED}Back{Fore.RESET}")
+        print(f"    {len(self.inventory) + 1}. {Fore.RED}Back{Fore.RESET}")
         choice = input("\nSelect an item to use or equip, or press the number for 'Back': ")
         if choice.isdigit():
             choice = int(choice)
@@ -398,6 +401,18 @@ class Character:
             print(Fore.RED + f"You can't use {item['name']}.")
         input("\nPress Enter to continue.")
 
+    def player_killed(player):
+        if "Second Life" in player.abilities:
+            print("")
+        else:
+            clear_console()
+            play_music(os.path.join("music", "game_over.mp3"))
+            Art.game_over(Fore.RED)
+            time.sleep(2)
+            sys.exit()
+        
+        # Handle player defeat (e.g., game over, respawn)
+        
 class Dialogue:
     def __init__(self, text, responses=None, action=None):
         self.text = text  # The dialogue text displayed by the NPC
@@ -405,6 +420,7 @@ class Dialogue:
         self.action = action  # Optional function to execute when this dialogue is reached
 
 class Tools:
+    is_music_playing = True
     class Values:
         CONSOLE_WIDTH = 0
 
@@ -473,6 +489,107 @@ class Tools:
 
         return table
 
+    def tell_story(story_name, music="music.mp3", wait_speed=5, start_delay=1):
+        if story_name == "creation":
+            music_path = os.path.join("music", "the_creation.mp3")
+            play_music(music_path)
+
+            clear_console()
+            time.sleep(start_delay)
+            print(f"""{Fore.LIGHTCYAN_EX}
+                  
+            ████████╗██╗  ██╗███████╗     ██████╗██████╗ ███████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+            ╚══██╔══╝██║  ██║██╔════╝    ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+               ██║   ███████║█████╗      ██║     ██████╔╝█████╗  ███████║   ██║   ██║██║   ██║██╔██╗ ██║
+               ██║   ██╔══██║██╔══╝      ██║     ██╔══██╗██╔══╝  ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
+               ██║   ██║  ██║███████╗    ╚██████╗██║  ██║███████╗██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
+               ╚═╝   ╚═╝  ╚═╝╚══════╝     ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                                                                                            
+""")
+            time.sleep(1)
+            clear_console()
+            print(f"""{Fore.CYAN}
+                  
+            ████████╗██╗  ██╗███████╗     ██████╗██████╗ ███████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+            ╚══██╔══╝██║  ██║██╔════╝    ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+               ██║   ███████║█████╗      ██║     ██████╔╝█████╗  ███████║   ██║   ██║██║   ██║██╔██╗ ██║
+               ██║   ██╔══██║██╔══╝      ██║     ██╔══██╗██╔══╝  ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
+               ██║   ██║  ██║███████╗    ╚██████╗██║  ██║███████╗██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
+               ╚═╝   ╚═╝  ╚═╝╚══════╝     ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                                                                                            
+""")
+            time.sleep(1)
+            clear_console()
+            print(f"""{Fore.LIGHTBLUE_EX}
+                  
+            ████████╗██╗  ██╗███████╗     ██████╗██████╗ ███████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
+            ╚══██╔══╝██║  ██║██╔════╝    ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
+               ██║   ███████║█████╗      ██║     ██████╔╝█████╗  ███████║   ██║   ██║██║   ██║██╔██╗ ██║
+               ██║   ██╔══██║██╔══╝      ██║     ██╔══██╗██╔══╝  ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
+               ██║   ██║  ██║███████╗    ╚██████╗██║  ██║███████╗██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
+               ╚═╝   ╚═╝  ╚═╝╚══════╝     ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                                                                                            
+""")
+            time.sleep(1)
+            clear_console()
+            time.sleep(2)   
+            
+
+            print(f"{Fore.BLUE}In the vast emptiness before time, a spark ignited...")
+            time.sleep(3)
+
+            print(f"{Fore.CYAN}\nTwo beings, {Style.BRIGHT}Lyrian{Style.RESET_ALL} and {Style.BRIGHT}Ozla{Style.RESET_ALL}, awoke to consciousness.")
+            time.sleep(wait_speed)
+
+            print("\nThey looked upon the nothingness and, together, dreamed a universe into existence.")
+            time.sleep(wait_speed)
+
+            print(f"\nThey shaped the {Fore.YELLOW}radiant realm of Eternum{Style.RESET_ALL}, their divine home, and then breathed life into {Fore.RED}Edoria{Style.RESET_ALL}, a world of swirling molten rock, a canvas for their grand designs.")
+            time.sleep(wait_speed)
+
+            print(f"{Fore.GREEN}\nLyrian{Style.RESET_ALL}, captivated by the beauty of creation, declared himself the {Style.BRIGHT}God of Existence{Style.RESET_ALL}.")
+            time.sleep(wait_speed)
+
+            print(f"{Fore.MAGENTA}\nOzla{Style.RESET_ALL}, drawn to the mysteries of endings, became the {Style.BRIGHT}God of the End{Style.RESET_ALL}.")
+            time.sleep(wait_speed)
+
+            print("\nBut their differing perspectives sowed the seeds of discord.")
+            time.sleep(wait_speed)
+
+            print(f"\nWithin Eternum, {Fore.MAGENTA}Ozla{Style.RESET_ALL} crafted the {Fore.BLACK}{Style.BRIGHT}Shade{Style.RESET_ALL}, a realm of darkness and shadow.")
+            time.sleep(wait_speed)
+
+            print(f"{Fore.GREEN}\nLyrian{Style.RESET_ALL} sought to banish this encroaching gloom, while {Fore.MAGENTA}Ozla{Style.RESET_ALL} reveled in its growth. Their disagreement fractured their unity, birthing a corrupting force that tainted Eternum's crystalline beauty.")
+            time.sleep(wait_speed)
+
+            print(f"{Fore.RED}\nThe Divine Rift{Style.RESET_ALL} tore through their bond. {Fore.GREEN}Lyrian{Style.RESET_ALL} stood as the High Deity, championing light and life. {Fore.MAGENTA}Ozla{Style.RESET_ALL}, embracing the darkness, retreated to the {Fore.BLACK}{Style.BRIGHT}Shade{Style.RESET_ALL}, her own realm of shadows.")
+            time.sleep(wait_speed)
+
+            print(f"\nTheir feud escalated into a cosmic war, the fate of {Fore.YELLOW}Eternum{Style.RESET_ALL} hanging in the balance.")
+            time.sleep(wait_speed)
+
+            print(f"{Fore.MAGENTA}\nOzla's{Style.RESET_ALL} monstrous {Fore.RED}Corrupters{Style.RESET_ALL} clashed with {Fore.GREEN}Lyrian's{Style.RESET_ALL} radiant {Fore.CYAN}Eternals{Style.RESET_ALL} in a symphony of destruction. The {Fore.RED}First Battle of the Corruption War{Style.RESET_ALL} painted Eternum with the blood of both sides. Though the Eternals emerged victorious, the cost was immense.")
+            time.sleep(wait_speed)
+
+            print("\nThe war raged on, a celestial dance of light and shadow. But in the end, Lyrian's forces prevailed.")
+            time.sleep(wait_speed)
+
+            print(f"{Fore.MAGENTA}\nOzla{Style.RESET_ALL} and her {Fore.BLACK}{Style.BRIGHT}Shade{Style.RESET_ALL} were banished, cast out from Eternum, a testament to the perils of unchecked ambition.")
+            time.sleep(wait_speed)
+
+            print("\nIn the wake of conflict, a new dawn arose. {Fore.GREEN}Lyrian{Style.RESET_ALL}, seeking balance and order, brought forth a pantheon of {Style.BRIGHT}Lesser Deities{Style.RESET_ALL}.")
+            time.sleep(wait_speed)
+
+            print("\nThey were entrusted with the stewardship of the multiverse, guiding mortals and shaping cultures on {Fore.RED}Edoria{Style.RESET_ALL}.")
+            time.sleep(wait_speed)
+
+            print(f"\nThe echoes of the {Fore.RED}Divine Rift{Style.RESET_ALL} still reverberate through the cosmos. {Fore.RED}Edoria{Style.RESET_ALL} stands as a testament to the eternal struggle between light and darkness, creation and destruction.")
+            time.sleep(wait_speed)
+
+            print("\nThe gods may have retreated to their celestial realms, but their influence lingers, shaping the destinies of mortals and reminding them of the delicate balance upon which existence rests.")
+            time.sleep(wait_speed + 3)
+
+
 
 
 # NPC Class
@@ -517,15 +634,6 @@ class NPC:
         else:
             return "Negative"
 
-
-class Database:
-    gamedata = GameData()
-    NPCs = {}
-    for npc_name, npc_data in gamedata.npcs.items():
-        NPCs[npc_name] = NPC(npc_data)
-
-
-
 # Enemy Class
 class Enemy:
     def __init__(self, enemy_data):
@@ -556,35 +664,73 @@ class Item:
 
 # Shop Class
 class Shop:
-    def __init__(self, game_data, player):
-        self.items = [Item(item_data) for item_data in game_data.items.values()]
+    def __init__(self, game_data: GameData, shop_name, shop_data):
         self.gamedata = game_data
+        self.shop_name = shop_name
+        self.shop_data = shop_data
+        self.items = []
+        self.populate_inventory()
 
-    def open_shop(self, player, game_data):
+    def open_shop(self, player):
+
+        # Play Bugbee's Greeting
+        play_sfx(os.path.join("sfx", "voiceover", self.shop_data['id'], "shop_greeting.mp3"))
+        
         while True:
             clear_console()
-            print(Fore.YELLOW + "\nWelcome to the shop!")
-            print(Fore.YELLOW + f"You have {Fore.CYAN}{player.gold}{Fore.YELLOW} gold.")
-            print("\nAvailable items:")
+            print(Fore.YELLOW + f"\nWelcome to {Fore.BLUE}{self.shop_name}{Fore.YELLOW}!")
+
+            # Create PrettyTable
+            table = PrettyTable()
+            table.field_names = ["#", "Item", "Price", "Quantity"]
+            table.align["Item"] = "l"  # Left align item name
+            table.align["Price"] = "l"  # Right align price
+            table.align["Quantity"] = "c"  # Right align quantity
+            table.set_style(SINGLE_BORDER)
+
+            # Populate the table
             for idx, item in enumerate(self.items):
-                print(f"{idx + 1}. {Fore.BLUE}{item.name}{Fore.RESET} - {Fore.YELLOW}{item.price} gold{Fore.RESET}")
-            print(f"{len(self.items) + 1}. {Fore.RED}Exit shop{Fore.RESET}")
+                item_price = item.price
+                sale_info = ""
+                item_quantity = self.shop_data['inventory'][item.name]['quantity']
+                if self.shop_data['inventory'][item.name]['on_sale']:
+                    item_price = item.price - (item.price * (self.shop_data['inventory'][item.name]['discount'] / 100))
+                    item_price = int(item_price)
+                    sale_info = f"{Fore.GREEN}[{self.shop_data['inventory'][item.name]['discount']}% SALE] {Fore.RESET}"
+                table.add_row([idx + 1, f"{item.name}", f"{Fore.YELLOW}{item_price} gold{Fore.RESET} {sale_info}", f"{Fore.CYAN}{item_quantity}{Fore.RESET}"])
+
+            # Print the table
+            print(table)
+
+            print(f"{Fore.RED}Press {Fore.YELLOW}'{len(self.items) + 1}'{Fore.RED} to Exit shop{Fore.RESET}")
+            print(Fore.YELLOW + f"You have {Fore.CYAN}{player.gold}{Fore.YELLOW} gold.{Fore.RESET}")
             choice = input("\nWhat would you like to buy? Enter the item number: ")
             if choice.isdigit():
                 choice = int(choice)
                 if 1 <= choice <= len(self.items):
                     item = self.items[choice - 1]
-                    if player.gold >= item.price:
-                        player.gold -= item.price
-                        player.inventory.append(vars(item))
-                        print(Fore.GREEN + f"\nYou purchased {item.name}!")
-                        time.sleep(1)
+                    item_price = item.price
+                    if self.shop_data['inventory'][item.name]['on_sale'] == True:
+                        item_price = item.price - (item.price * (self.shop_data['inventory'][item.name]['discount'] / 100))
+                        item_price = int(item_price)
+                    if player.gold >= item_price:
+                        if self.shop_data['inventory'][item.name]['quantity'] > 0:  # Check if item is in stock
+                            player.gold -= item_price
+                            player.inventory.append(vars(item))
+                            self.shop_data['inventory'][item.name]['quantity'] -= 1  # Decrement quantity
+                            print(Fore.GREEN + f"\nYou purchased {item.name}!")
+                            play_sfx(os.path.join("sfx", "voiceover", self.shop_data['id'], f"purchase{random.randint(1, 4)}.mp3"))
+                            input("Press Enter to continue...")
+                        else:
+                            print(Fore.RED + f"\nSorry, {item.name} is out of stock.")
+                            input("Press Enter to continue...")
                     else:
                         print(Fore.RED + "\nYou don't have enough gold.")
                         input("Press Enter to continue...")
                 elif choice == len(self.items) + 1:
                     clear_console()
                     Art.come_again_soon(Fore.LIGHTYELLOW_EX)
+                    play_sfx(os.path.join("sfx", "voiceover", self.shop_data['id'], "shop_goodbye.mp3"))
                     time.sleep(3)
                     break
                 else:
@@ -593,6 +739,31 @@ class Shop:
             else:
                 print(Fore.RED + "Please enter a valid option.")
                 time.sleep(1)
+
+    def populate_inventory(self):
+        for item_name, item_data in self.shop_data['inventory'].items():
+            item_data['name'] = item_name
+            if item_name in self.gamedata.items:
+                item_data.update(self.gamedata.items[item_name])
+                item = Item(item_data)
+                self.items.append(item)
+
+    def new(gamedata, shop_name, shop_data):
+        return Shop(gamedata, shop_name, shop_data)
+
+class Database:
+    gamedata = GameData()
+    NPCs = {}
+    shops = []
+    for npc_name, npc_data in gamedata.npcs.items():
+        NPCs[npc_name] = NPC(npc_data)
+    
+    def create_shops_from_data(self):
+        shops = []
+        for shop_name, shop_data in self.shops.items():
+            shops.append(Shop(game_data=GameData, shop_name=shop_name, shop_data=shop_data))
+        return shops
+
 
 # ASCII Art
 class Art:
@@ -623,17 +794,38 @@ class Art:
 # Game Class
 class Game:
     player: Character
+    game_data: GameData
 
     def parse_command(user_input, player_send):
-        player: Character = player_send
-        command = str(user_input).replace("/", "")
-        command_parts = command.split(" ")
-        if command_parts[0] == "give":
-            player.inventory.append()
-        else:
-            input(Fore.RED + "Command not recognized. Press any key to continue.")
+        if game_data.DeveloperModeEnabled:
+            player: Character = player_send
+            command = str(user_input).replace("/", "")
+            command_parts = command.split(" ")
 
-            # Main Game Loop
+            #Give player command
+            if command_parts[0] == "give":
+                player.inventory.append()
+            
+            if command_parts[0] == "gold":
+                player.gold = int(command_parts[1])
+
+            # Print Data command
+            if command_parts[0].lower() in ['print', 'display', 'show']:
+
+                #Show NPC table
+                if command_parts[1].lower() in ['npcdata', 'npcs', 'allnpcs']:
+                    print(Fore.RESET + npc_table)
+                    print("\n")
+                    input("Press Enter to continue...")
+
+            else:
+                input(Fore.RED + "Command not recognized. Press any key to continue.")
+
+                # Main Game Loop
+
+        else:
+            print(f"Developer mode is {Fore.RED}disabled{Fore.RESET}.")
+
     def game(self, gamedata):
         game_data = gamedata
         music_thread = threading.Thread(target=play_music, args=("music.mp3",))
@@ -647,8 +839,11 @@ class Game:
 
             if player:
                 # Play Travel Music
-                pygame.mixer.music.stop()
+                Tools.is_music_playing = False
+                time.sleep(1)
+                Tools.is_music_playing = True
                 travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
+                
                 travel_music.start()
 
             if not player:
@@ -666,20 +861,31 @@ class Game:
         # Main game flow
         while True:
             clear_console()
-            location_text = Fore.YELLOW + f"You are in {player.location}."
+            location_text = Fore.YELLOW + f"You are in {Fore.BLUE}{player.location}{Fore.YELLOW}.\n"
             location = game_data.locations.get(player.location, {})
             options = ['Explore', 'Check Inventory', 'View Stats', 'Save Game', 'Quit']
-            if location.get('shop'):
-                options.insert(0, 'Visit Shop')
-            if location.get('npc'):
-                options.insert(0, f"Talk to {location['npc']}")
+            if location.get('shopPresent'):
+                shops = location.get('shops', [])
+                options.insert(0, f"Visit {Fore.YELLOW}Shop{Fore.RESET}")
+                
+            if location.get('npcs'):
+                npcs = location.get('npcs', [])
+                for npc in npcs:
+                    options.insert(0, f"Talk to {Fore.BLUE}{npc}{Fore.RESET}")
             choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
-            if choice == 'Visit Shop':
-                # Open shop
-                shop = Shop(game_data, player)
-                shop.open_shop(player, game_data)
-                sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "shop.mp3"),))
-                sfx_thread.start()
+            
+            if choice.startswith(f'Visit {Fore.YELLOW}Shop{Fore.RESET}'):
+                shop_list = list(game_data.shops.keys())
+                
+                selected_shop = select_option(shop_list, "Select a shop:", clear_screen=True)
+                
+                shop_name = selected_shop[0]
+
+
+                Game.shop_summary(shop_name, player)
+
+            
+            
             elif choice.startswith('Talk to'):
                 npc_name = choice.replace('Talk to ', '')
                 npc = Database.NPCs.get(npc_name)
@@ -691,20 +897,27 @@ class Game:
             elif choice == 'Explore':
                 # Move to a new location
                 locations = list(game_data.locations.keys())
+                print(f"{Fore.YELLOW}Current Location:{Fore.CYAN}{player.location}{Fore.RESET}\n")
                 location_choice, _ = select_option(locations + ['Back'], "Where would you like to go?", clear_screen=False)
                 if location_choice != 'Back':
-                    player.move_to_location(location_choice, game_data)
-                    # Random encounter
-                    if random.choice([True, False]):
-                        possible_enemies = [
-                            enemy_data for enemy_data in game_data.enemies.values()
-                            if player.location in enemy_data['locations']
-                        ]
-                        if possible_enemies:
-                            # Randomly select an enemy from the valid ones
-                            enemy_data = random.choice(possible_enemies)
-                            enemy = Enemy(enemy_data)
-                            battle(player, enemy)
+                    if player.location == location_choice:
+                        print(f"{Fore.RED}You are already at {Fore.BLUE}{location_choice}{Fore.RESET}.")
+                        time.sleep(2)
+                    else:
+                        player.move_to_location(location_choice, game_data)
+                        # Random encounter
+                        randomEncounter = random.choice([True, False])
+                        if randomEncounter:
+                            possible_enemies = [
+                                enemy_data for enemy_data in game_data.enemies.values()
+                                if player.location in enemy_data['locations']
+                            ]
+                            if possible_enemies:
+                                # Randomly select an enemy from the valid ones
+                                enemy_data = random.choice(possible_enemies)
+                                enemy = Enemy(enemy_data)
+                                battle(player, enemy)
+                    
                 else:
                     continue
 
@@ -719,8 +932,27 @@ class Game:
                 save_game(player)
             elif choice == 'Quit':
                 print(Fore.RED + "Exiting game...")
+                Tools.is_music_playing = False
                 sys.exit()
-    
+
+    def shop_summary(shop_name, player):
+                    # Summary Shop (To give the player the option to enter or not)
+        clear_console()
+        print(print_bar("large", Fore.YELLOW))
+        print(f"{Fore.LIGHTBLUE_EX}{shop_name} {Fore.RED}({game_data.shops.get(shop_name).get('type')})")
+        print(f"{Fore.WHITE}\nMerchant: {Fore.RED}{game_data.shops.get(shop_name).get('merchant')}")
+        print(f"{Fore.WHITE}\nDescription:\n{Fore.RED}{game_data.shops.get(shop_name).get('description')}{Fore.RESET}")
+        print(print_bar("large", Fore.YELLOW))
+        choice = select_option(["Yes", "No"], f"Would you like to enter {Fore.LIGHTBLUE_EX}{shop_name}{Fore.YELLOW}?{Fore.RESET}", Fore.YELLOW, False)
+        # Open shop
+        if choice[0] == "Yes":
+            shop = Shop(game_data, shop_name, game_data.shops[shop_name])        
+            # Add the merchant to the options!!
+            shop.open_shop(player)
+        if choice[0] == "No":
+            time.sleep(1)
+            clear_console()
+
 
 # Battle System
 def battle(player: Character, enemy: Enemy):
@@ -734,7 +966,7 @@ def battle(player: Character, enemy: Enemy):
             player_ac += player.equipped_armor.get('ac_bonus', 0)
         clear_console()
         print_titlebar("large", f"{Fore.BLUE}{player.name}{Fore.RESET}", Fore.YELLOW)
-        print(f"{Fore.BLUE}   AC: {player.ac}{Fore.RESET}")
+        print(f"{Fore.BLUE}   Armor Rating: {player.ac}{Fore.RESET}")
         print(f"{Fore.RED}   HP: ({player.health}/{player.max_health}){Fore.RESET}")
 
         print_titlebar("large", f"{Fore.RED}{enemy.name}{Fore.YELLOW}", Fore.YELLOW)
@@ -752,7 +984,7 @@ def battle(player: Character, enemy: Enemy):
             if player.equipped_weapon:
                 attack_roll += player.equipped_weapon.get('attack_bonus', 0)
             time.sleep(1)
-            print(f"\nYou rolled an attack of {attack_roll} vs Enemy AC {enemy.ac}")
+            print(f"\nYou rolled an attack of {attack_roll} vs Enemy Armor Rating {enemy.ac}")
             if attack_roll >= enemy.ac:
                 damage_roll = player.equipped_weapon.get('damage', '1d4') if player.equipped_weapon else '1d4'
                 damage = roll_damage(damage_roll) + player.modifiers['Strength']
@@ -769,14 +1001,14 @@ def battle(player: Character, enemy: Enemy):
         elif action == 'Use Item':
             clear_console()
             player.show_inventory_table()
-        elif action == 'Run':
-            run_chance = random.randint(1, 20) + player.modifiers['Dexterity']
-            if run_chance > 10:
-                print(Fore.GREEN + f"\nYou successfully escaped with a roll of {Fore.CYAN}{run_chance}{Fore.YELLOW}")
+        elif action == 'Flee':
+            flee_chance = random.randint(1, 20) + player.modifiers['Dexterity']
+            if flee_chance > 10:
+                print(Fore.GREEN + f"\nYou successfully escaped with a roll of {Fore.CYAN}{flee_chance}{Fore.YELLOW}")
                 input("Press Enter to continue...")
                 return
             else:
-                print(Fore.RED + f"\nYou failed to escape with a roll of {Fore.CYAN}{run_chance}{Fore.RESET}")
+                print(Fore.RED + f"\nYou failed to escape with a roll of {Fore.CYAN}{flee_chance}{Fore.RESET}")
         
         # Enemy's turn
         if enemy.is_alive():
@@ -785,7 +1017,7 @@ def battle(player: Character, enemy: Enemy):
             print_titlebar("normal", f"{Fore.RED}{enemy.name.upper()} TURN{Fore.YELLOW}", Fore.YELLOW)
             enemy_attack_roll = random.randint(1, 20) + enemy.attack_bonus
             time.sleep(1)
-            print(f"\n{Fore.RED}{enemy.name}{Fore.RESET} attacks with a roll of {Fore.GREEN}{enemy_attack_roll}{Fore.RESET} vs Your {Fore.BLUE}AC {player_ac}{Fore.RESET}")
+            print(f"\n{Fore.RED}{enemy.name}{Fore.RESET} attacks with a roll of {Fore.GREEN}{enemy_attack_roll}{Fore.RESET} vs Your {Fore.BLUE}Armor Rating {player_ac}{Fore.RESET}")
             if enemy_attack_roll >= player_ac:
                 enemy_damage = roll_damage(enemy.damage)
                 player.adjust_health(-enemy_damage)
@@ -797,13 +1029,9 @@ def battle(player: Character, enemy: Enemy):
             input("\nPress Enter to continue...")
 
     if player.health <= 0:
-        clear_console()
-        Art.game_over(Fore.RED)
-        time.sleep(2)
-        sys.exit()
-        
-        # Handle player defeat (e.g., game over, respawn)
-    elif not enemy.is_alive():
+        Character.player_killed(player)
+    #Defeated Enemy
+    if not enemy.is_alive():
         time.sleep(2)
         print(Fore.GREEN + f"You defeated the {enemy.name}!")
         earned_exp = enemy.level * 10
@@ -869,9 +1097,6 @@ def roll_damage(damage_str: str):
     total = sum(random.randint(1, int(die)) for _ in range(int(num)))
     return total
 
-         
-                
-
 def print_titlebar(size="normal", title="MENU", color=Fore.WHITE, style=Style.NORMAL):
     if size == "small":
         print(f"{color}══════════════ {title} ══════════════")
@@ -880,6 +1105,13 @@ def print_titlebar(size="normal", title="MENU", color=Fore.WHITE, style=Style.NO
     elif size == "large":
         print(f"{color}════════════════════════════ {title} ════════════════════════════")
 
+def print_bar(size, color=Fore.WHITE, style=Style.NORMAL):
+    if size == "small":
+        return f"{color}════════════════════════════{Fore.RESET}"
+    elif size == "normal":
+        return f"{color}════════════════════════════════════════════{Fore.RESET}"
+    elif size == "large":
+        return f"{color}════════════════════════════════════════════════════════{Fore.RESET}"
 def create_character(game_data):
     color = Fore.GREEN
     reset = Fore.RESET
@@ -930,6 +1162,18 @@ def create_character(game_data):
     print(Fore.GREEN + "\nCharacter created successfully!")
     player.show_stats()
     input("\nPress Enter to continue...")
+    clear_console
+    input("Would you like some lore? (y/n)")
+    if input == "y":
+        Tools.tell_story("creation", "the_creation.mp3", 4, 3)
+    
+        # Play Travel Music
+    Tools.is_music_playing = False
+    time.sleep(1)
+    Tools.is_music_playing = True
+    travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
+    
+    travel_music.start()
     return player
 
 def play_music(music_name):
@@ -937,6 +1181,11 @@ def play_music(music_name):
         pygame.mixer.init()
         pygame.mixer.music.load(music_name)
         pygame.mixer.music.play(-1)  # Loop the music
+        pygame.mixer.music.set_volume(0.5)  # Set volume to 50%
+        while pygame.mixer.music.get_busy() and Tools.is_music_playing:
+            time.sleep(1)  # Check periodically if music should stop
+        pygame.mixer.music.stop()
+
     else:
         print(Fore.RED + f"Music file {music_name} not found.")
 
