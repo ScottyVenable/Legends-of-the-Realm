@@ -52,5 +52,61 @@
         "type": "ammunition",
         "price": 1,
         "rarity": "common"
-      }
+      },
+        "Ale": {
+          "name": "Ale",
+          "type": "consumable",
+          "price": 3,
+          "effect": "heal",
+          "value": 2,
+          "rarity": "common"
+        },
+        "Blackberry Wine": {
+          "name": "Blackberry Wine",
+          "type": "consumable",
+          "price": 5,
+          "effect": "heal",
+          "value": 3, 
+          "rarity": "common"
+        },
+        "Dragon's Breath Shot": {
+          "name": "Dragon's Breath Shot",
+          "type": "consumable",
+          "price": 8,
+          "effect": "damage",
+          "value": 5,
+          "rarity": "uncommon"
+        },
+        "Bacon and Eggs Breakfast": {
+          "name": "Bacon and Eggs Breakfast",
+          "type": "consumable",
+          "price": 12,
+          "effect": "heal",
+          "value": 8,
+          "rarity": "common"
+        },
+        "Roast Mutton and Potatoes": {
+          "name": "Roast Mutton and Potatoes",
+          "type": "consumable",
+          "price": 14,
+          "effect": "heal",
+          "value": 10,
+          "rarity": "common"
+        },
+        "Cabbage Stew with Roasted Carrots": {
+          "name": "Cabbage Stew with Roasted Carrots",
+          "type": "consumable",
+          "price": 10,
+          "effect": "heal",
+          "value": 6, 
+          "rarity": "common"
+        },
+        "Freshly Squeezed Orange Juice": {
+          "name": "Freshly Squeezed Orange Juice",
+          "type": "consumable",
+          "price": 4,
+          "effect": "heal",
+          "value": 3, 
+          "rarity": "common"
+        }
 }

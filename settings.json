@@ -1,4 +1,5 @@
 {
     "Developer Mode": true,
-    "Title SFX Enabled": false
+    "Title SFX Enabled": false,
+    "Developer Data Display At Startup": false
 }

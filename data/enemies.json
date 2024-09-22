@@ -1,32 +1,45 @@
 {
-    "Goblin Leader": {
+    "goblin_leader": {
         "name": "Goblin Leader",
         "level": 1,
         "health": 15,
         "ac": 11,
         "attack_bonus": 3,
+        "damage_bonus": "2",
         "damage": "2d6",
         "gold": 50,
         "locations": ["Forest Path", "Goblin Camp"]
       },
-      "Bandit": {
+      "bandit": {
         "name": "Bandit",
         "level": 2,
         "health": 20,
         "ac": 12,
         "attack_bonus": 4,
+        "damage_bonus": "0",
         "damage": "1d6",
         "gold": 75,
         "locations": ["Forest Path", "Bandit Lair"]
       },
-      "Ancient Dragon": {
+      "ancient_dragon": {
         "name": "Ancient Dragon",
         "level": 5,
         "health": 35,
         "ac": 15,
         "attack_bonus": 7,
         "damage": "1d12",
+        "damage_bonus": "4",
         "gold": 500,
         "locations": ["Mountain Pass", "Dragon's Lair"]
+      },
+      "goblin": {
+        "name": "Goblin",
+        "level": 1,
+        "health": 10,
+        "ac": 10,
+        "attack_bonus": 2,
+        "damage": "1d6",
+        "gold": 25,
+        "locations": ["Forest Path", "Goblin Camp"]
       }
 }

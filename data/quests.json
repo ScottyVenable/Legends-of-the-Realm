@@ -1,25 +1,54 @@
 {
-    "GoblinThreat": {
-      "name": "Goblin Threat",
-      "description": "Defeat the goblin raiders attacking the village.",
-      "reward": {
-        "gold": 50,
-        "experience": 100
-      },
-      "location": "Brightwood Village",
-      "objective": "Defeat Goblin Leader",
-      "status": "Available"
+  "Goblin Threat": {
+    "id": 1,
+    "name": "Goblin Threat",
+    "description": "The goblins have been raiding the village, stealing crops and livestock.  They are led by a fearsome goblin chieftain, Gorg.  The villagers need your help to defeat Gorg and protect their livelihood.",
+    "giver": "Elder Kita",
+    "reward": {
+      "gold": 100,
+      "experience": 50
     },
-    "DragonThreat": {
-      "name": "Dragon Threat",
-      "description": "Defeat the dragon threatening the kingdom.",
-      "reward": {
-        "gold": 500,
-        "title": "Hero of the Realm",
-        "experience": 500
-      },
-      "location": "Capital City",
-      "objective": "Defeat Ancient Dragon",
-      "status": "Available"
-    }
+    "location": "Brightwood Village",
+    "objective": "Defeat Gorg, the goblin chieftain",
+    "status": "Active"
+  },
+  "Lost Treasure": {
+    "id": 2,
+    "name": "Lost Treasure",
+    "description": "A rumor has spread through the tavern about a lost treasure hidden deep within the Whispering Woods.  The villagers are wary of venturing into the woods, but they've heard tales of a map that can lead you to the treasure.",
+    "giver": "Barkeep Ben",
+    "reward": {
+      "gold": 200,
+      "experience": 100
+    },
+    "location": "The Rusty Mug Tavern",
+    "objective": "Find the lost treasure in the Whispering Woods",
+    "status": "Inactive"
+  },
+  "The Missing Child": {
+    "id": 3,
+    "name": "The Missing Child",
+    "description": "A young child has gone missing from the village.  The villagers are frantic, and they are desperate for help.  They believe the child might have been kidnapped by a group of bandits.",
+    "giver": "Mrs. Willow",
+    "reward": {
+      "gold": 150,
+      "experience": 75
+    },
+    "location": "Brightwood Village",
+    "objective": "Find the missing child and return them safely",
+    "status": "Inactive"
+  },
+  "The Cursed Artifact": {
+    "id": 4,
+    "name": "The Cursed Artifact",
+    "description": "An ancient artifact has been unearthed near the village, but it is rumored to be cursed.  The villagers are afraid to touch it, but they believe it holds great power.  They need you to investigate its nature and find a way to control its power.",
+    "giver": "Old Man Thorne",
+    "reward": {
+      "gold": 300,
+      "experience": 150
+    },
+    "location": "Brightwood Village",
+    "objective": "Discover the true nature of the cursed artifact and find a way to control it",
+    "status": "Inactive"
   }
+}

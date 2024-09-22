@@ -6,8 +6,8 @@
         "merchant_name": "Clement Bugbee",
         "merchant_greeting": "Hey there stranger! How can I help you?",
         "merchant_goodbye": "Hey, thanks for stoppin' by!",
-        "description": "The clanging of hammers and the scent of freshly-forged steel greet you as you approach \"Bugbee's Blades & Brews.\" \nA weathered sign hangs above the door, depicting a fierce, axe-wielding half-orc. \nYou've heard that Bugbee might be one of the best (and kindest) blacksmiths in Brightwood!",
-        "greeting_sfx": "bugbee_greeting.mp3",
+        "description": "A blacksmith shop owned by the half-orc Clement Bugbee.\nClement's wife Kia sells potions as well!",
+        "greeting_sfx": "bugbee_greeting.wav",
         "inventory": {
             "Leather Armor": {
                 "quantity": 3,
@@ -25,9 +25,61 @@
                 "on_sale": true,
                 "discount": 10
             }
-        },
+        }
+    },
     "The Thirsty Hare": {
-        "id": "thirsty_hare"
+        "merchant_id": "tianna",
+        "type": "Tavern",
+        "location": "Brightwood Village",
+        "merchant_name": "Tianna Humbleton",
+        "merchant_greeting": "Come on in, I just got the fire going!",
+        "merchant_goodbye": "Take care of yourself out there!",
+        "description": "Food for hungry and beds for the weary!",
+        "greeting_sfx": "tianna_greeting.wav",
+        "inventory": {
+            "Ale": {
+                "quantity": 20,
+                "price": 3,
+                "on_sale": false,
+                "discount": 1
+            },
+            "Blackberry Wine": {
+                "quantity": 15,
+                "price": 5,
+                "on_sale": false,
+                "discount": 1
+            },
+            "Dragon's Breath Shot": {
+                "quantity": 10,
+                "price": 8,
+                "on_sale": true,
+                "discount": 2
+            },
+            "Bacon and Eggs Breakfast": {
+                "quantity": 15,
+                "price": 12,
+                "on_sale": false,
+                "discount": 2
+            },
+            "Roast Mutton and Potatoes": {
+                "quantity": 15,
+                "price": 14,
+                "on_sale": true,
+                "discount": 4
+            },
+            "Cabbage Stew with Roasted Carrots": {
+                "quantity": 10,
+                "price": 10,
+                "on_sale": false,
+                "discount": 2
+            },
+            "Freshly Squeezed Orange Juice": {
+                "quantity": 15,
+                "price": 4,
+                "on_sale": false,
+                "discount": 2
+            }
+        }
     }
-    }
+    
 }

@@ -10,6 +10,7 @@ import threading
 import sys
 from tabulate import tabulate
 from prettytable import PrettyTable, MARKDOWN, SINGLE_BORDER, DOUBLE_BORDER, DEFAULT, PLAIN_COLUMNS, MSWORD_FRIENDLY, FRAME, RANDOM
+import keyboard
 
 # Initialize colorama
 init(autoreset=True)
@@ -17,15 +18,22 @@ init(autoreset=True)
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_screen=True, player_send=None):
+def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_screen=True, player_send=None, back_option=False):
     player = player_send
     while True:
         if clear_screen:
             clear_console()
         print(color + title)
-        for idx, option in enumerate(options):
+        options_list = options
+        if back_option:
+            options_list.append("Back")
+        for idx, option in enumerate(options_list):
             print(f"{idx + 1}. {option}")
-        choice = input(f"\n{Fore.YELLOW}Enter the number of your choice:{Fore.CYAN} ")
+        choice = input(f"\n{Fore.YELLOW} >>{Fore.CYAN} ")
+        if keyboard.is_pressed('i'):  # Check if "i" is pressed
+            if player:
+                player.show_inventory_table()
+                time.sleep(0.1)  # Add a slight delay to prevent multiple presses
         if choice.isdigit():
             index = int(choice) - 1
             if 0 <= index < len(options):
@@ -36,6 +44,9 @@ def select_option(options, title="Select an option:", color=Fore.YELLOW, clear_s
                 print(Fore.RED + "Invalid choice. Please select a valid option.\n")
                 time.sleep(1)
                 input(f"{Fore.BLUE}Press any key to continue...")
+        
+
+        
         elif choice.startswith("/"):
             if player != None:
                 Game.parse_command(choice, player_send=player)
@@ -88,7 +99,9 @@ class GameData:
         self.year = self.game_info.get('CopyrightYear', '2023')
         self.publisher = self.game_info.get('Publisher', 'Game Publisher')
         self.developer = self.game_info.get('Developer', 'Game Developer')
+
         self.DeveloperModeEnabled = self.settings.get('Developer Mode', False)
+        self.DevDataDisplayAtStartup = self.settings.get('Developer Data Display At Startup', False)
 
     def load_data(self, filename):
         try:
@@ -103,8 +116,6 @@ class GameData:
             print(Fore.RED + f"Error: Could not find {filename}")
             return {}
         
-
-
 # Character Classes
 class Character:
     def __init__(self, name, race, gender, background, char_class):
@@ -131,6 +142,7 @@ class Character:
         self.health = 0
         self.max_health = 0
         self.ac = 10
+        self.state = ""
 
     def roll_attributes(self):
         attributes = {}
@@ -411,7 +423,7 @@ class Character:
             Art.game_over(Fore.RED)
             time.sleep(2)
             Tools.is_music_playing = True
-            music_thread = threading.Thread(target=play_music, args=(os.path.join("music", "game_over.mp3"),))
+            music_thread = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "game_over.mp3"),))
             music_thread.start()
             time.sleep(8)
             clear_console()
@@ -429,13 +441,14 @@ class Character:
         # Handle player defeat (e.g., game over, respawn)
         
 class Dialogue:
-    def __init__(self, text, responses=None, action=None, id=None, speaker=None, options=[]):
+    def __init__(self, text, responses=None, action=None, id=None, speaker=None, options=[], conditions=[]):
         self.text = text
         self.responses = responses if responses is not None else []
         self.action = action
         self.id = id
         self.speaker = speaker
         self.options = options
+        self.conditions = conditions
 
 class Tools:
     is_music_playing = True
@@ -512,7 +525,7 @@ class Tools:
     def tell_story(story_name, music="music.mp3", wait_speed=5, start_delay=1):
         if story_name == "creation":
             music_path = os.path.join("music", "the_creation.mp3")
-            play_music(music_path)
+            Audio.play_music(music_path)
 
             clear_console()
             time.sleep(start_delay)
@@ -615,7 +628,6 @@ class Quest:
         print(Fore.GREEN + "You have accepted the quest and received 100 gold.")
         # ... other actions (like updating quest status, etc.) ...
 
-
 class NPC:
     def __init__(self, name, dialogue_data):
         self.name = name
@@ -651,6 +663,7 @@ class NPC:
                     print(Fore.RED + "Invalid input. Please enter a number.")
                     time.sleep(1)
             input("press Enter to continue...")
+        
         else:
             print(f"{Fore.RED} No dialogue found for ID: {dialogue_id}{Fore.RESET}")
             time.sleep(1)
@@ -706,7 +719,7 @@ class Shop:
         # Play Shop Greeting
         sfx_path = os.path.join("sfx", "voiceover", shop_data.shop_data['merchant_id'], f"{file_name}.wav")
         if os.path.exists(sfx_path):
-            play_sfx(sfx_path)
+            Audio.play_sfx(sfx_path)
 
     def open_shop(self, player):
         self.player = player
@@ -714,6 +727,8 @@ class Shop:
         self.merchant_name = self.shop_data['merchant_name']
         self.merchant_greeting = self.shop_data['merchant_greeting']
         self.merchant_goodbye = self.shop_data['merchant_goodbye']
+        self.shop_type = self.shop_data['type']
+        self.play_shop_music()
         self.play_shop_sfx("shop_greeting") # We can add an argument later to randomize the greeting!
 
         # Shop Loop
@@ -745,8 +760,10 @@ class Shop:
                             print(Fore.GREEN + f"\nYou purchased {item.name}!")
                             purchase_sfx_count = self.get_purchase_sfx_count(self.shop_data['merchant_id']) # Get the number of sfxs in a folder.
                             random_sfx_number = random.randint(1, purchase_sfx_count) # Get random sound effect.
-                            play_sfx(os.path.join("sfx", "voiceover", self.shop_data['merchant_id'], f"purchase - {random_sfx_number}.wav"))
-                            input("Press Enter to continue...")
+                            Audio.play_sfx(os.path.join("sfx", "voiceover", self.shop_data['merchant_id'], f"purchase - {random_sfx_number}.wav"))
+                            time.sleep(1)
+                            print(Fore.WHITE + f"You now have {Fore.YELLOW}[ {player.gold} ] {Fore.WHITE}gold.\n")
+                            time.sleep(2)
                         else:
                             print(Fore.RED + f"\nSorry, {item.name} is out of stock.")
                             input("Press Enter to continue...")
@@ -756,6 +773,13 @@ class Shop:
                 elif choice == len(self.items) + 1:
                     print(f"\n{Fore.BLUE}{self.merchant_name}: {Fore.WHITE}{self.merchant_goodbye}{Fore.RESET}")
                     self.play_shop_sfx("shop_goodbye")
+                    Tools.is_music_playing = False
+                    time.sleep(1)
+                    Tools.is_music_playing = True
+                    music_thread = threading.Thread(target=Audio.play_music, args=(Audio.traveling_music_path,))
+                    music_thread.start()
+                    
+
                     time.sleep(2)
                     break
                 elif choice == len(self.items) + 2: #Open Players Inventory
@@ -780,7 +804,7 @@ class Shop:
     def show_shop_inventory(self):
         player = self.player
         print_titlebar(size="normal", title=f"{Fore.BLUE}Shop Inventory{Fore.YELLOW}", color=Fore.YELLOW)
-        print(Fore.CYAN + f"\n Your Gold \n  {Fore.YELLOW}[ {player.gold} ]\n")
+        print(Fore.CYAN + f"\n  Your Gold: {Fore.YELLOW}[ {player.gold} ] {Fore.CYAN}\n")
 
         # Create PrettyTable
         table = PrettyTable()
@@ -820,6 +844,15 @@ class Shop:
     def new(gamedata, shop_name, shop_data):
         return Shop(gamedata, shop_name, shop_data)
 
+    def play_shop_music(self):
+        Tools.is_music_playing = False
+        time.sleep(1)
+        Tools.is_music_playing = True
+        music_file = os.path.join("music", f"{self.shop_type}.wav")
+        music_thread = threading.Thread(target=Audio.play_music, args=(music_file.lower(),))
+        music_thread.start()
+        Tools.is_music_playing = True
+        
     # Get the number of files in a folder. We can change this later to be more universal.
     def get_purchase_sfx_count(self, merchant_id):
         """
@@ -881,6 +914,7 @@ class Game:
     def parse_command(user_input, player_send):
         if game_data.DeveloperModeEnabled:
             player: Character = player_send
+            gamedata: GameData = game_data
             command = str(user_input).replace("/", "")
             command_parts = command.split(" ")
 
@@ -891,6 +925,15 @@ class Game:
             if command_parts[0] == "gold":
                 player.gold = int(command_parts[1])
 
+            if command_parts[0] in ['battle', 'fight']:
+                enemy_data = gamedata.enemies.get(command_parts[1])
+                
+                if enemy_data:
+                    enemy = Enemy(enemy_data)
+                    battle(player, enemy)
+                else:
+                    print(f"{Fore.RED}Enemy not found.")
+                    time.sleep(1)
             # Print Data command
             if command_parts[0].lower() in ['print', 'display', 'show']:
 
@@ -899,6 +942,11 @@ class Game:
                     print(Fore.RESET + npc_table)
                     print("\n")
                     input("Press Enter to continue...")
+            
+            # Flee battle or shop
+            if command_parts[0].lower() in ['flee', 'run', 'escape', 'leave']:
+                if player.state == "battle":
+                    player.state == "flee"
 
             else:
                 input(Fore.RED + "Command not recognized. Press any key to continue.")
@@ -910,12 +958,12 @@ class Game:
 
     def game(self, gamedata):
         game_data = gamedata
-        music_thread = threading.Thread(target=play_music, args=("music.mp3",))
+        music_thread = threading.Thread(target=Audio.play_music, args=("music.mp3",))
         music_thread.start()
         display_title_screen(game_data)
         choice, _ = select_option(['New Game', 'Load Game', 'Exit Game'], "Select an option:", clear_screen=False)
         if choice == 'Load Game':
-            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
+            sfx_thread = threading.Thread(target=Audio.play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
             sfx_thread.start()
             player = load_game()
 
@@ -924,7 +972,7 @@ class Game:
                 Tools.is_music_playing = False
                 time.sleep(1)
                 Tools.is_music_playing = True
-                travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
+                travel_music = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "traveling.mp3"),))
                 
                 travel_music.start()
 
@@ -936,14 +984,13 @@ class Game:
             sys.exit()
         else:
         #   pygame.mixer.music.stop()
-            sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
+            sfx_thread = threading.Thread(target=Audio.play_sfx, args=(os.path.join("sfx", "newgame.mp3"),))
             sfx_thread.start()
             player = create_character(game_data)
 
         # Main game flow
         while True:
             clear_console()
-            location_text = Fore.YELLOW + f"You are in {Fore.BLUE}{player.location}{Fore.YELLOW}.\n"
             location = game_data.locations.get(player.location, {})
             options = ['Explore', 'Check Inventory', 'View Stats', 'Save Game', 'Quit']
             if location.get('shopPresent'):
@@ -953,8 +1000,13 @@ class Game:
             if location.get('npcs'):
                 npcs = location.get('npcs', [])
                 options.insert(0, f"Talk to an {Fore.BLUE}NPC{Fore.RESET}")
-            choice, _ = select_option(options, f"{location_text}\nWhat would you like to do?", clear_screen=True, player_send=player)
             
+            print_titlebar("large", f"{Fore.BLUE}{player.location}{Fore.YELLOW}", Fore.YELLOW)
+            
+            choice, _ = select_option(options, f"What would you like to do?", clear_screen=False, player_send=player)
+            
+            clear_console()
+
             if choice.startswith(f'Visit {Fore.YELLOW}Shop{Fore.RESET}'):
                 shop_list = list(game_data.shops.keys())
                 
@@ -1017,6 +1069,7 @@ class Game:
             elif choice == 'Quit':
                 print(Fore.RED + "Exiting game...")
                 Tools.is_music_playing = False
+                time.sleep(2)
                 sys.exit()
 
     def shop_summary(shop_name, player):
@@ -1041,9 +1094,29 @@ class Game:
 # Battle System
 def battle(player: Character, enemy: Enemy):
     # Enhanced battle system with equipment and abilities
-
+    Tools.is_music_playing = False
+    time.sleep(1)
+    Tools.is_music_playing = True
+    battle_music = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "battle.wav"), 0.5))
+    battle_music.start()
+    player.state == "battle"
 
     while enemy.is_alive() and player.health > 0:
+        if player.state == "flee":
+
+            if flee_chance:
+                print(Fore.GREEN + f"\nYou successfully escaped with a roll of {Fore.CYAN}{flee_chance}{Fore.YELLOW}")
+            else:
+                print(Fore.GREEN + f"\nYou successfully escaped!!")
+            input("Press Enter to continue...")
+            Tools.is_music_playing = False
+            time.sleep(1)
+            Tools.is_music_playing = True
+            music = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "traveling.mp3"), 0.5))
+            music.start()
+            return
+
+        
         player.ac = player.get_ac()
         player_ac = player.ac
         if player.equipped_armor:
@@ -1054,9 +1127,9 @@ def battle(player: Character, enemy: Enemy):
         print(f"{Fore.RED}   HP: ({player.health}/{player.max_health}){Fore.RESET}")
 
         print_titlebar("large", f"{Fore.RED}{enemy.name}{Fore.YELLOW}", Fore.YELLOW)
-        print(f"   HP: {enemy.health}\n")
+        print(f"   {Fore.RED}HP: {enemy.health}\n")
 
-        options = ['Attack', 'Use Ability', 'Use Item', 'Run']
+        options = ['Attack', 'Use Ability', 'Use Item', 'Flee']
 
         # Players Turn
         print_titlebar("large", "", Fore.YELLOW)
@@ -1068,13 +1141,13 @@ def battle(player: Character, enemy: Enemy):
             if player.equipped_weapon:
                 attack_roll += player.equipped_weapon.get('attack_bonus', 0)
             time.sleep(1)
-            print(f"\nYou rolled an attack of {attack_roll} vs Enemy Armor Rating {enemy.ac}")
+            print(f"\nYou rolled an attack of {Fore.GREEN}{attack_roll}{Fore.RESET} vs {Fore.RED}{enemy.name}'s{Fore.BLUE} Armor Rating {enemy.ac}{Fore.RESET}")
             if attack_roll >= enemy.ac:
                 damage_roll = player.equipped_weapon.get('damage', '1d4') if player.equipped_weapon else '1d4'
                 damage = roll_damage(damage_roll) + player.modifiers['Strength']
                 enemy.health -= damage
                 time.sleep(1)
-                print(Fore.GREEN + f"You hit the {enemy.name} for {damage} damage!")
+                print(f"{Fore.RESET}{player.name} {Fore.GREEN}HITS{Fore.RESET} the {Fore.RED}{enemy.name} for {Fore.RED}{damage} damage!{Fore.RESET}")
             else:
                 time.sleep(1)
                 print(Fore.RED + "Your attack missed!")
@@ -1088,12 +1161,11 @@ def battle(player: Character, enemy: Enemy):
         elif action == 'Flee':
             flee_chance = random.randint(1, 20) + player.modifiers['Dexterity']
             if flee_chance > 10:
-                print(Fore.GREEN + f"\nYou successfully escaped with a roll of {Fore.CYAN}{flee_chance}{Fore.YELLOW}")
-                input("Press Enter to continue...")
-                return
+                player.state == "flee"
             else:
                 print(Fore.RED + f"\nYou failed to escape with a roll of {Fore.CYAN}{flee_chance}{Fore.RESET}")
         
+
         # Enemy's turn
         if enemy.is_alive():
             print()
@@ -1123,6 +1195,11 @@ def battle(player: Character, enemy: Enemy):
         player.exp += earned_exp
         player.gold += enemy_gold_loot
         print(Fore.YELLOW + f"You gained {earned_exp} experience and found {enemy_gold_loot} gold!")
+        Tools.is_music_playing = False
+        time.sleep(1)
+        Tools.is_music_playing = True
+        music = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "traveling.mp3"), 0.5))
+        music.start()
         input("Press Enter to continue...")
 
 def use_ability(player, enemy):
@@ -1200,6 +1277,8 @@ def create_character(game_data):
     color = Fore.GREEN
     reset = Fore.RESET
     input_color = Fore.CYAN
+
+
     # Character Creation
     gender_options = list(["Male", "Female", "Non-binary"])
     gender_selection = select_option(gender_options, f"Choose your character's {color}gender{reset}:", clear_screen=True)
@@ -1255,37 +1334,13 @@ def create_character(game_data):
     Tools.is_music_playing = False
     time.sleep(1)
     Tools.is_music_playing = True
-    travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
-    
-    travel_music.start()
     return player
 
-def play_music(music_name, volume=0.5):
-    if os.path.exists(music_name):
-        pygame.mixer.init()
-        pygame.mixer.music.load(music_name)
-        pygame.mixer.music.play(-1)  # Loop the music
-        pygame.mixer.music.set_volume(volume)  # Set volume to 50%
-        while pygame.mixer.music.get_busy() and Tools.is_music_playing:
-            time.sleep(1)  # Check periodically if music should stop
-        pygame.mixer.music.stop()
-
-    else:
-        print(Fore.RED + f"Music file {music_name} not found.")
-
-def play_sfx(sfx_path, delay=0, volume=1.0):
-    if os.path.exists(sfx_path):
-        sound = pygame.mixer.Sound(sfx_path)
-        time.sleep(delay)
-        sound.play()
-        sound.set_volume(volume)
-    else:
-        print(Fore.RED + f"Sound effect file {sfx_path} not found.")
 
 # Title Screen
 def display_title_screen(game_data: GameData):
     if game_data.settings['Title SFX Enabled']:
-        sfx_thread = threading.Thread(target=play_sfx, args=(os.path.join("sfx", "title.mp3"), 2))
+        sfx_thread = threading.Thread(target=Audio.play_sfx, args=(os.path.join("sfx", "title.mp3"), 2))
         sfx_thread.start()
 
     clear_console()
@@ -1318,11 +1373,40 @@ def display_title_screen(game_data: GameData):
     print(f"{Fore.YELLOW}       Version {Fore.BLUE}{game_data.version}              {Fore.YELLOW}Created by {Fore.BLUE}{game_data.developer} {game_data.year}")
     print(f"{Fore.YELLOW}════════════════════════════════════════════════════════════════════════════════════════════════════════════\n")
 
+
+class Audio:
+    def play_music(music_name, volume=0.3):
+        if os.path.exists(music_name):
+            pygame.mixer.init()
+            pygame.mixer.music.load(music_name)
+            pygame.mixer.music.play(-1)  # Loop the music
+            pygame.mixer.music.set_volume(volume)  # Set volume to 50%
+            while pygame.mixer.music.get_busy() and Tools.is_music_playing:
+                time.sleep(1)  # Check periodically if music should stop
+            pygame.mixer.music.stop()
+
+        else:
+            print(Fore.RED + f"Music file {music_name} not found.")
+
+    def play_sfx(sfx_path, delay=0, volume=1.0):
+        if os.path.exists(sfx_path):
+            sound = pygame.mixer.Sound(sfx_path)
+            time.sleep(delay)
+            sound.play()
+            sound.set_volume(volume)
+        else:
+            print(Fore.RED + f"Sound effect file {sfx_path} not found.")
+
+    travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
+    tavern_music = threading.Thread(target=play_music, args=(os.path.join("music", "tavern.wav")))
+
+    traveling_music_path = os.path.join("music", "traveling.mp3")
+    tavern_music_path = os.path.join("music", "tavern.wav")
 if __name__ == "__main__":
     game_data = GameData()
     game_object = Game()
     try:
-        if game_data.DeveloperModeEnabled:
+        if game_data.DevDataDisplayAtStartup:
             clear_console()
             print(Fore.CYAN + f"Developer mode: {Fore.GREEN}ENABLED{Fore.RESET}")
             print(Fore.CYAN + f"Loading data...{Fore.RESET}\n\n")
