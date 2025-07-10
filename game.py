@@ -8,9 +8,46 @@ from colorama import init, Fore, Style
 import pygame
 import threading
 import sys
-from tabulate import tabulate
-from prettytable import PrettyTable, MARKDOWN, SINGLE_BORDER, DOUBLE_BORDER, DEFAULT, PLAIN_COLUMNS, MSWORD_FRIENDLY, FRAME, RANDOM
-import keyboard
+try:
+    from tabulate import tabulate
+except ImportError:
+    print("tabulate not installed. Install with: pip install tabulate")
+    tabulate = None
+try:
+    from prettytable import PrettyTable, MARKDOWN, SINGLE_BORDER, DOUBLE_BORDER, DEFAULT, PLAIN_COLUMNS, MSWORD_FRIENDLY, FRAME, RANDOM
+except ImportError:
+    print("prettytable not installed. Install with: pip install prettytable")
+    # Create fallback classes
+    class PrettyTable:
+        def __init__(self):
+            self.field_names = []
+            self.align = "l"
+            self.rows = []
+            self.min_width = 1
+            self.max_table_width = 80
+            self.min_table_width = 10
+            
+        def add_row(self, row):
+            self.rows.append(row)
+            
+        def set_style(self, style):
+            pass
+            
+        def __str__(self):
+            if not self.rows:
+                return ""
+            return "\n".join(["\t".join(map(str, row)) for row in self.rows])
+    
+    SINGLE_BORDER = DOUBLE_BORDER = FRAME = None
+try:
+    import keyboard
+except ImportError:
+    print("keyboard not installed. Install with: pip install keyboard")
+    # Create fallback keyboard module
+    class keyboard:
+        @staticmethod
+        def is_pressed(key):
+            return False
 
 # Initialize colorama
 init(autoreset=True)
@@ -381,10 +418,15 @@ class Character:
             align="l",
             vrules=FRAME,
         )
-        table.min_width = 1
-        table.max_table_width = Tools.get(Tools.Values.CONSOLE_WIDTH) - 3
-        table.min_table_width = 50
-        table.set_style(DOUBLE_BORDER)
+        if hasattr(table, 'min_width'):
+            table.min_width = 1
+        console_width = Tools.get(Tools.Values.CONSOLE_WIDTH)
+        if hasattr(table, 'max_table_width') and console_width:
+            table.max_table_width = console_width - 3
+        if hasattr(table, 'min_table_width'):
+            table.min_table_width = 50
+        if hasattr(table, 'set_style'):
+            table.set_style(DOUBLE_BORDER)
         print(table)
 
         # Get user input
@@ -414,6 +456,7 @@ class Character:
             print(Fore.RED + f"You can't use {item['name']}.")
         input("\nPress Enter to continue.")
 
+    @staticmethod
     def player_killed(player):
         if "Second Life" in player.abilities:
             print("")
@@ -428,9 +471,10 @@ class Character:
             time.sleep(8)
             clear_console()
             choice = input("Would you like to continue? (Y/N): ")
-            if choice.lower == "y":
-                Game.game(GameData)
-                is_music_playing = False
+            if choice.lower() == "y":
+                game_instance = Game()
+                game_instance.game(GameData())
+                Tools.is_music_playing = False
             else:
                 clear_console()
                 print("Thanks for playing!!\n")
@@ -457,11 +501,14 @@ class Tools:
         DIALOGUE_INTRO_GREETING = 0
         DIALOGUE_NORMAL_GREETING = 1
 
-    def get(type):
-        if type == Tools.Values.CONSOLE_WIDTH:
+    @staticmethod
+    def get(type_val):
+        if type_val == Tools.Values.CONSOLE_WIDTH:
             console_width = shutil.get_terminal_size().columns
             return console_width
+        return None
         
+    @staticmethod
     def make_table(data, title="", field_names=None, align="l", style=SINGLE_BORDER, title_color=Fore.RESET, vrules=None, hrules=None, sortby=None, reversesort=False, min_width=10, max_width=20):
         """
         Creates a formatted table using PrettyTable.
@@ -483,7 +530,8 @@ class Tools:
             PrettyTable: The formatted table object.
         """
 
-        max_width = Tools.get(Tools.Values.CONSOLE_WIDTH) - 4
+        console_width = Tools.get(Tools.Values.CONSOLE_WIDTH)
+        max_width = console_width - 4 if console_width else 80
         table = PrettyTable()
 
         # Set column names
@@ -496,32 +544,34 @@ class Tools:
 
         # Add rows
         if isinstance(data, dict):
-            table.add_row(data.values())
+            table.add_row(list(data.values()))
         else:
             for row in data:
                 table.add_row(row)
 
         # Apply formatting
-        table.align = align
-        if vrules:
-            table.vrules = getattr(PrettyTable, vrules)
-        if hrules:
-            table.hrules = getattr(PrettyTable, hrules)
-        if sortby:
+        if hasattr(table, 'align'):
+            table.align = align
+        if vrules and hasattr(table, 'vrules'):
+            table.vrules = getattr(PrettyTable, vrules, None)
+        if hrules and hasattr(table, 'hrules'):
+            table.hrules = getattr(PrettyTable, hrules, None)
+        if sortby and hasattr(table, 'sortby'):
             table.sortby = sortby
-            table.reversesort = reversesort
-        if title:
+            if hasattr(table, 'reversesort'):
+                table.reversesort = reversesort
+        if title and hasattr(table, 'title'):
             table.title = f"{title_color}{title}{Fore.RESET}"
-        if style:
+        if style and hasattr(table, 'set_style'):
             table.set_style(style)
-        if max_width:
+        if max_width and hasattr(table, 'max_width'):
             table.max_width = max_width
-        if min_width:
+        if min_width and hasattr(table, 'min_width'):
             table.min_width = min_width
-
 
         return table
 
+    @staticmethod
     def tell_story(story_name, music="music.mp3", wait_speed=5, start_delay=1):
         if story_name == "creation":
             music_path = os.path.join("music", "the_creation.mp3")
@@ -623,6 +673,7 @@ class Tools:
             time.sleep(wait_speed + 3)
 
 class Quest:
+    @staticmethod
     def accept_quest_with_reward(player, reward_amount):
         player.gold += reward_amount  # Add the reward
         print(Fore.GREEN + "You have accepted the quest and received 100 gold.")
@@ -707,6 +758,7 @@ class Shop:
         self.npcs = []
         self.player = None
 
+    @staticmethod
     def play_shop_sfx(shop_data, file_name="shop_greeting"):
         """
         Plays a sound effect for the given shop.
@@ -803,16 +855,21 @@ class Shop:
 
     def show_shop_inventory(self):
         player = self.player
+        if not player:
+            print("No player found")
+            return
         print_titlebar(size="normal", title=f"{Fore.BLUE}Shop Inventory{Fore.YELLOW}", color=Fore.YELLOW)
         print(Fore.CYAN + f"\n  Your Gold: {Fore.YELLOW}[ {player.gold} ] {Fore.CYAN}\n")
 
         # Create PrettyTable
         table = PrettyTable()
         table.field_names = ["#", "Item", "Price", "Quantity"]
-        table.align["Item"] = "l"  # Left align item name
-        table.align["Price"] = "l"  # Right align price
-        table.align["Quantity"] = "c"  # Right align quantity
-        table.set_style(SINGLE_BORDER)
+        if hasattr(table, 'align') and hasattr(table.align, '__setitem__'):
+            table.align["Item"] = "l"  # Left align item name
+            table.align["Price"] = "l"  # Right align price
+            table.align["Quantity"] = "c"  # Right align quantity
+        if hasattr(table, 'set_style'):
+            table.set_style(SINGLE_BORDER)
 
         # Populate the table
         for idx, item in enumerate(self.items):
@@ -841,6 +898,7 @@ class Shop:
                 item = Item(item_data)
                 self.items.append(item)
 
+    @staticmethod
     def new(gamedata, shop_name, shop_data):
         return Shop(gamedata, shop_name, shop_data)
 
@@ -875,23 +933,25 @@ class Database:
 
     def create_shops_from_data(self):
         shops = []
-        for shop_name, shop_data in self.shops.items():
-            shops.append(Shop(game_data=GameData, shop_name=shop_name, shop_data=shop_data))
+        for shop_name, shop_data in self.gamedata.shops.items():
+            shops.append(Shop(game_data=self.gamedata, shop_name=shop_name, shop_data=shop_data))
         return shops
 
 
 # ASCII Art
 class Art:
+    @staticmethod
     def come_again_soon(color=Fore.YELLOW):
         print(f"""{color}
               
    ____                          _               _         ____                    _ 
-  / ___|___  _ __ ___   ___     / \   __ _  __ _(_)_ __   / ___|  ___   ___  _ __ | |
- | |   / _ \| '_ ` _ \ / _ \   / _ \ / _` |/ _` | | '_ \  \___ \ / _ \ / _ \| '_ \| |
- | |__| (_) | | | | | |  __/  / ___ \ (_| | (_| | | | | |  ___) | (_) | (_) | | | |_|
-  \____\___/|_| |_| |_|\___| /_/   \_\__, |\__,_|_|_| |_| |____/ \___/ \___/|_| |_(_)
+  / ___|___  _ __ ___   ___     / \\   __ _  __ _(_)_ __   / ___|  ___   ___  _ __ | |
+ | |   / _ \\| '_ ` _ \\ / _ \\   / _ \\ / _` |/ _` | | '_ \\  \\___ \\ / _ \\ / _ \\| '_ \\| |
+ | |__| (_) | | | | | |  __/  / ___ \\ (_| | (_| | | | | |  ___) | (_) | (_) | | | |_|
+  \\____\\___/|_| |_| |_|\\___| /_/   \\_\\__, |\\__,_|_|_| |_| |____/ \\___/ \\___/|_| |_(_)
                                      |___/                                                                                                                                                                                                                                                                                    
 """) 
+    @staticmethod
     def game_over(color=Fore.RED):
         print(color + """
           ▄████  ▄▄▄       ███▄ ▄███▓▓█████     ▒█████   ██▒   █▓▓█████  ██▀███  
@@ -911,6 +971,7 @@ class Game:
     player: Character
     game_data: GameData
 
+    @staticmethod
     def parse_command(user_input, player_send):
         if game_data.DeveloperModeEnabled:
             player: Character = player_send
@@ -920,7 +981,12 @@ class Game:
 
             #Give player command
             if command_parts[0] == "give":
-                player.inventory.append()
+                if len(command_parts) > 1:
+                    item_name = command_parts[1]
+                    # This would need to be implemented to actually give items
+                    print(f"Give {item_name} functionality not yet implemented")
+                else:
+                    print("Give command needs an item name")
             
             if command_parts[0] == "gold":
                 player.gold = int(command_parts[1])
@@ -939,14 +1005,50 @@ class Game:
 
                 #Show NPC table
                 if command_parts[1].lower() in ['npcdata', 'npcs', 'allnpcs']:
-                    print(Fore.RESET + npc_table)
+                    # Create NPC table on demand
+                    npc_names = []
+                    npc_roles = []
+                    npc_types = []
+                    npc_locations = []
+
+                    # Add all the NPC data to their categories Names, Roles, Locations
+                    for npc_data in gamedata.npcs:
+                        npc = gamedata.npcs[npc_data]
+                        npc_names.append(f"{Fore.BLUE}{npc['name']}{Fore.RESET}")
+                        npc_roles.append(f"{Fore.LIGHTRED_EX}{npc['role']}{Fore.RESET}")
+                        npc_types.append(f"{Fore.LIGHTYELLOW_EX}{npc['type']}{Fore.RESET}")
+                        npc_locations.append(f"{Fore.GREEN}{npc['locations']}{Fore.RESET}")
+
+                    npc_table = PrettyTable()
+                    if hasattr(npc_table, 'title'):
+                        npc_table.title = f"{Fore.YELLOW}NPCs{Fore.RESET}"
+                    if hasattr(npc_table, 'border'):
+                        npc_table.border = True
+                    if hasattr(npc_table, 'add_column'):
+                        npc_table.add_column("Name", npc_names)
+                        npc_table.add_column("Type", npc_types)
+                        npc_table.add_column("Role", npc_roles)
+                        npc_table.add_column("Location", npc_locations)
+                    else:
+                        npc_table.field_names = ["Name", "Type", "Role", "Location"]
+                        for i in range(len(npc_names)):
+                            npc_table.add_row([npc_names[i], npc_types[i], npc_roles[i], npc_locations[i]])
+
+                    if hasattr(npc_table, 'set_style'):
+                        npc_table.set_style(DOUBLE_BORDER)
+                    if hasattr(npc_table, 'align'):
+                        npc_table.align = "l"
+                    if hasattr(npc_table, 'sortby'):
+                        npc_table.sortby = "Type"
+                    
+                    print(Fore.RESET + str(npc_table))
                     print("\n")
                     input("Press Enter to continue...")
             
             # Flee battle or shop
             if command_parts[0].lower() in ['flee', 'run', 'escape', 'leave']:
                 if player.state == "battle":
-                    player.state == "flee"
+                    player.state = "flee"
 
             else:
                 input(Fore.RED + "Command not recognized. Press any key to continue.")
@@ -1015,7 +1117,7 @@ class Game:
                 shop_name = selected_shop[0]
 
 
-                Game.shop_summary(shop_name, player)
+                Game.shop_summary(shop_name, player, game_data)
 
             
             
@@ -1072,8 +1174,9 @@ class Game:
                 time.sleep(2)
                 sys.exit()
 
-    def shop_summary(shop_name, player):
-                    # Summary Shop (To give the player the option to enter or not)
+    @staticmethod
+    def shop_summary(shop_name, player, game_data):
+        # Summary Shop (To give the player the option to enter or not)
         clear_console()
         print(print_bar("large", Fore.YELLOW))
         print(f"{Fore.LIGHTBLUE_EX}{shop_name} {Fore.RED}({game_data.shops.get(shop_name).get('type')})")
@@ -1099,7 +1202,7 @@ def battle(player: Character, enemy: Enemy):
     Tools.is_music_playing = True
     battle_music = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "battle.wav"), 0.5))
     battle_music.start()
-    player.state == "battle"
+    player.state = "battle"
 
     while enemy.is_alive() and player.health > 0:
         if player.state == "flee":
@@ -1161,7 +1264,7 @@ def battle(player: Character, enemy: Enemy):
         elif action == 'Flee':
             flee_chance = random.randint(1, 20) + player.modifiers['Dexterity']
             if flee_chance > 10:
-                player.state == "flee"
+                player.state = "flee"
             else:
                 print(Fore.RED + f"\nYou failed to escape with a roll of {Fore.CYAN}{flee_chance}{Fore.RESET}")
         
@@ -1325,15 +1428,19 @@ def create_character(game_data):
     print(Fore.GREEN + "\nCharacter created successfully!")
     player.show_stats()
     input("\nPress Enter to continue...")
-    clear_console
-    input("Would you like some lore? (y/n)")
-    if input == "y":
+    clear_console()
+    
+    lore_choice = input("Would you like some lore? (y/n): ")
+    if lore_choice.lower() == "y":
         Tools.tell_story("creation", "the_creation.mp3", 4, 3)
     
-        # Play Travel Music
+    # Play Travel Music
     Tools.is_music_playing = False
     time.sleep(1)
     Tools.is_music_playing = True
+    travel_music = threading.Thread(target=Audio.play_music, args=(os.path.join("music", "traveling.mp3"),))
+    travel_music.start()
+    
     return player
 
 
@@ -1375,6 +1482,7 @@ def display_title_screen(game_data: GameData):
 
 
 class Audio:
+    @staticmethod
     def play_music(music_name, volume=0.3):
         if os.path.exists(music_name):
             pygame.mixer.init()
@@ -1388,6 +1496,7 @@ class Audio:
         else:
             print(Fore.RED + f"Music file {music_name} not found.")
 
+    @staticmethod
     def play_sfx(sfx_path, delay=0, volume=1.0):
         if os.path.exists(sfx_path):
             sound = pygame.mixer.Sound(sfx_path)
@@ -1397,7 +1506,7 @@ class Audio:
         else:
             print(Fore.RED + f"Sound effect file {sfx_path} not found.")
 
-    travel_music = threading.Thread(target=play_music, args=(os.path.join("music", "traveling.mp3"),))
+    traveling_music_path = os.path.join("music", "traveling.mp3")
     tavern_music = threading.Thread(target=play_music, args=(os.path.join("music", "tavern.wav")))
 
     traveling_music_path = os.path.join("music", "traveling.mp3")
@@ -1426,17 +1535,26 @@ if __name__ == "__main__":
                 npc_locations.append(f"{Fore.GREEN}{npc['locations']}{Fore.RESET}")
 
             npc_table = PrettyTable()
-            npc_table.title = f"{Fore.YELLOW}NPCs{Fore.RESET}"
-            npc_table.border = True
-            npc_table.add_column("Name", npc_names)
-            npc_table.add_column("Type", npc_types)
-            npc_table.add_column("Role", npc_roles)
-            npc_table.add_column("Location", npc_locations)
+            if hasattr(npc_table, 'title'):
+                npc_table.title = f"{Fore.YELLOW}NPCs{Fore.RESET}"
+            if hasattr(npc_table, 'border'):
+                npc_table.border = True
+            if hasattr(npc_table, 'add_column'):
+                npc_table.add_column("Name", npc_names)
+                npc_table.add_column("Type", npc_types)
+                npc_table.add_column("Role", npc_roles)
+                npc_table.add_column("Location", npc_locations)
+            else:
+                npc_table.field_names = ["Name", "Type", "Role", "Location"]
+                for i in range(len(npc_names)):
+                    npc_table.add_row([npc_names[i], npc_types[i], npc_roles[i], npc_locations[i]])
 
-            npc_table.set_style(DOUBLE_BORDER)
-            npc_table.align = "l"
-            npc_table.sortby = "Type"
-
+            if hasattr(npc_table, 'set_style'):
+                npc_table.set_style(DOUBLE_BORDER)
+            if hasattr(npc_table, 'align'):
+                npc_table.align = "l"
+            if hasattr(npc_table, 'sortby'):
+                npc_table.sortby = "Type"
 
             print(npc_table)
             input(f"{Fore.YELLOW}\npress any key to continue...")
