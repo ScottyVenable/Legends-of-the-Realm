@@ -1,62 +1,62 @@
 {
-    "Millhaven": {
+    "millhaven": {
         "name": "Millhaven",
         "description": "A small, peaceful village nestled in a valley.",
         "connections": [
-          "Forest Path",
-          "Goblin Camp"
+          "forest_path",
+          "goblin_camp"
         ],
         "shopPresent": true,
         "shops": ["Bugbee's Blades & Brews"],
         "npcs": ["Elder Kita"]
       },
-      "Forest Path": {
+      "forest_path": {
         "name": "Forest Path",
         "description": "A winding path through a dense forest.",
         "connections": [
-          "Millhaven",
-          "Bandit Lair"
+          "millhaven",
+          "bandit_lair"
         ]
       },
-      "Goblin Camp": {
+      "goblin_camp": {
         "name": "Goblin Camp",
         "description": "A makeshift camp filled with goblins.",
         "connections": [
-          "Millhaven"
+          "millhaven"
         ],
         "enemies": ["Goblin Leader"]
       },
-      "Bandit Lair": {
+      "bandit_lair": {
         "name": "Bandit Lair",
         "description": "A hidden cave used as a bandit hideout.",
         "connections": [
-          "Forest Path"
+          "forest_path"
         ],
         "enemies": ["Bandit"]
       },
-      "Capital City": {
+      "capital_city": {
         "name": "Capital City",
         "description": "A bustling city, the center of the kingdom.",
         "connections": [
-          "Mountain Pass",
-          "Dragon's Lair"
+          "mountain_pass",
+          "dragons_lair"
         ],
         "shop": true,
         "npcs": ["King"]
       },
-      "Mountain Pass": {
+      "mountain_pass": {
         "name": "Mountain Pass",
         "description": "A treacherous path through the mountains.",
         "connections": [
-          "Capital City",
-          "Dragon's Lair"
+          "capital_city",
+          "dragons_lair"
         ]
       },
-      "Dragon's Lair": {
+      "dragons_lair": {
         "name": "Dragon's Lair",
         "description": "A fiery cavern where the dragon dwells.",
         "connections": [
-          "Mountain Pass"
+          "mountain_pass"
         ],
         "enemies": ["Ancient Dragon"]
       }

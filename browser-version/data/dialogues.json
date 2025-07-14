@@ -1,84 +1,561 @@
 {
-    "Elder Kita": [
-        {
-            "id": 0,
-            "name": "intro_greeting",
-            "text": "Greetings, traveler. What brings you to our village?",
-            "responses": [
-                {"text": "Ask about the village history.", "next_id": 1},
-                {"text": "Offer to help with any tasks.", "next_id": 2},
-                {"text": "Say goodbye.", "next_id": -1}
-            ]
-        },
-        {
-            "id": 1,
-            "text": "Our village has a rich history dating back centuries...",
-            "responses": [{"text": "Back to main conversation.", "next_id": 0}]
-        },
-        {
-            "id": 2,
-            "text": "Actually, we could use some assistance with a task...",
-            "responses": [{"text": "Back to main conversation.", "next_id": 0}]
-        }
-    ],
+    "metadata": {
+        "version": "1.0",
+        "description": "NPC dialogue system for Legends of the Realm",
+        "last_updated": "2025-07-14"
+    },
     
-    "Merchant": [
-        {
-            "id": 0,
-            "text": "Welcome, traveler! What can I offer you today?",
-            "responses": [
-                {"text": "Show me your wares.", "next_id": 1},
-                {"text": "I'm just browsing.", "next_id": 2},
-                {"text": "I need to leave.", "next_id": -1}
-            ]
+    "npcs": {
+        "elder_kita": {
+            "name": "Elder Kita",
+            "greeting": "Greetings, brave adventurer. Welcome to our humble village of Millhaven.",
+            "dialogues": {
+                "default": {
+                    "id": 0,
+                    "text": "How may I assist you today, traveler?",
+                    "responses": [
+                        {
+                            "text": "Tell me about the village history.",
+                            "next": "village_history",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Are there any tasks I can help with?",
+                            "next": "available_quests",
+                            "requirements": []
+                        },
+                        {
+                            "text": "What dangers threaten the village?",
+                            "next": "village_threats",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Farewell, Elder.",
+                            "next": "goodbye",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "village_history": {
+                    "id": 1,
+                    "text": "Millhaven was founded three centuries ago by brave settlers fleeing the great wars. Our ancestors chose this location for its natural defenses and fertile lands. The ancient castle you see to the north once protected all the surrounding settlements.",
+                    "responses": [
+                        {
+                            "text": "What happened to the castle?",
+                            "next": "castle_ruins",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Continue our conversation.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "castle_ruins": {
+                    "id": 2,
+                    "text": "The castle fell during the Dark Times, when monsters overran the land. It's been abandoned for decades, though some say treasures and secrets still lie within its crumbling walls.",
+                    "responses": [
+                        {
+                            "text": "Perhaps I should explore it.",
+                            "next": "castle_warning",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Let's talk about something else.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "castle_warning": {
+                    "id": 3,
+                    "text": "Be careful, young one. Many adventurers have entered those ruins, but few return. Make sure you're well-prepared before attempting such a dangerous venture.",
+                    "responses": [
+                        {
+                            "text": "I understand. Thank you for the warning.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "available_quests": {
+                    "id": 4,
+                    "text": "Indeed, there are several matters that could use the attention of a capable adventurer. We've had reports of increased goblin activity, a missing merchant caravan, and strange lights in the Dark Forest.",
+                    "responses": [
+                        {
+                            "text": "Tell me about the goblin threat.",
+                            "next": "goblin_quest",
+                            "requirements": []
+                        },
+                        {
+                            "text": "What about the missing caravan?",
+                            "next": "caravan_quest",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Those strange lights sound interesting.",
+                            "next": "forest_lights_quest",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Let me think about it.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "village_threats": {
+                    "id": 5,
+                    "text": "Several threats plague our peaceful village. Goblins raid our outlying farms, a valuable merchant caravan has gone missing on the forest road, and mysterious lights have been seen over the Dark Forest at night.",
+                    "responses": [
+                        {
+                            "text": "How can I help?",
+                            "next": "available_quests",
+                            "requirements": []
+                        },
+                        {
+                            "text": "That sounds dangerous.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "goblin_quest": {
+                    "id": 6,
+                    "text": "Goblins have been raiding our farms and stealing livestock. We need someone brave enough to track them to their lair and put an end to their attacks. The reward would be substantial.",
+                    "responses": [
+                        {
+                            "text": "I'll deal with the goblins.",
+                            "next": "accept_goblin_quest",
+                            "action": "start_quest:goblin_threat",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Tell me about the other problems.",
+                            "next": "available_quests",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "caravan_quest": {
+                    "id": 7,
+                    "text": "A merchant caravan from the capital is three days overdue. They were carrying valuable goods and gold. We fear they may have met with bandits or worse along the forest road.",
+                    "responses": [
+                        {
+                            "text": "I'll investigate the missing caravan.",
+                            "next": "accept_caravan_quest",
+                            "action": "start_quest:missing_merchant",
+                            "requirements": []
+                        },
+                        {
+                            "text": "What about the other issues?",
+                            "next": "available_quests",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "forest_lights_quest": {
+                    "id": 8,
+                    "text": "Strange, otherworldly lights have been seen dancing among the trees of the Dark Forest. Some say they're spirits, others believe it's magic gone awry. Someone needs to investigate before it spreads.",
+                    "responses": [
+                        {
+                            "text": "I'll explore the forest lights.",
+                            "next": "accept_lights_quest",
+                            "action": "start_quest:forest_lights",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Let me hear about the other problems.",
+                            "next": "available_quests",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "goodbye": {
+                    "id": -1,
+                    "text": "May the gods watch over you on your journey, brave adventurer. Return to us safely.",
+                    "action": "end_conversation"
+                }
+            }
         },
-        {
-            "id": 1,
-            "text": "Certainly! Take a look at my inventory.",
-            "action": "show_wares"
+        
+        "merchant_tianna": {
+            "name": "Merchant Tianna",
+            "greeting": "Welcome to my shop, traveler! I have the finest goods from across the realm.",
+            "dialogues": {
+                "default": {
+                    "id": 0,
+                    "text": "What brings you to my humble establishment?",
+                    "responses": [
+                        {
+                            "text": "Show me your wares.",
+                            "next": "show_shop",
+                            "action": "open_shop",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Tell me about your travels.",
+                            "next": "travel_stories",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Any news from other settlements?",
+                            "next": "trade_news",
+                            "requirements": []
+                        },
+                        {
+                            "text": "I need to go.",
+                            "next": "goodbye",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "travel_stories": {
+                    "id": 1,
+                    "text": "I've traveled far and wide, from the bustling markets of the capital to the mysterious desert cities. Each place has its own wonders and dangers. The road of a merchant is never dull!",
+                    "responses": [
+                        {
+                            "text": "What's the most dangerous place you've visited?",
+                            "next": "dangerous_places",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Let's talk about something else.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "dangerous_places": {
+                    "id": 2,
+                    "text": "The Cursed Marshlands, without a doubt. Strange creatures lurk in the mists, and the very air seems to sap your strength. I only pass through there when the profit is worth the risk!",
+                    "responses": [
+                        {
+                            "text": "Fascinating. What else can you tell me?",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "trade_news": {
+                    "id": 3,
+                    "text": "Trade has been difficult lately. Bandits on the roads, monsters in the wilderness, and now this missing caravan has everyone worried. Still, demand for quality goods remains high!",
+                    "responses": [
+                        {
+                            "text": "Missing caravan?",
+                            "next": "caravan_info",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Let's discuss something else.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "caravan_info": {
+                    "id": 4,
+                    "text": "A caravan from the capital carrying rare spices and gold has been missing for days. The road through the Dark Forest can be treacherous. I hope they found shelter somewhere safe.",
+                    "responses": [
+                        {
+                            "text": "I might investigate that.",
+                            "next": "caravan_encouragement",
+                            "requirements": []
+                        },
+                        {
+                            "text": "That's concerning.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "caravan_encouragement": {
+                    "id": 5,
+                    "text": "If you do find them, I'd be willing to pay handsomely for any rare goods you recover. Just bring them to me first before selling elsewhere!",
+                    "responses": [
+                        {
+                            "text": "I'll keep that in mind.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "goodbye": {
+                    "id": -1,
+                    "text": "Safe travels, and remember - Tianna's shop has the best prices in the realm!",
+                    "action": "end_conversation"
+                }
+            }
         },
-        {
-            "id": 2,
-            "text": "No problem, take your time.",
-            "action": "browsing"
+        
+        "blacksmith_bugbee": {
+            "name": "Blacksmith Bugbee",
+            "greeting": "Welcome to my forge! I craft the finest weapons and armor in all the land.",
+            "dialogues": {
+                "default": {
+                    "id": 0,
+                    "text": "Need something forged, or are you here to browse my finished work?",
+                    "responses": [
+                        {
+                            "text": "Show me your weapons and armor.",
+                            "next": "show_shop",
+                            "action": "open_shop",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Can you craft custom equipment?",
+                            "next": "custom_work",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Tell me about your craft.",
+                            "next": "blacksmith_lore",
+                            "requirements": []
+                        },
+                        {
+                            "text": "I should be going.",
+                            "next": "goodbye",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "custom_work": {
+                    "id": 1,
+                    "text": "Aye, I can craft custom pieces, but it requires rare materials and significant coin. Bring me quality ores and gems, and I'll forge you something truly special.",
+                    "responses": [
+                        {
+                            "text": "What materials do you need?",
+                            "next": "material_list",
+                            "requirements": []
+                        },
+                        {
+                            "text": "I'll keep that in mind.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "material_list": {
+                    "id": 2,
+                    "text": "For superior weapons, I need mithril ore from the mountains, dragon scales for armor, and enchanted gems for magical properties. Not easy to come by, but worth the effort!",
+                    "responses": [
+                        {
+                            "text": "Where can I find these materials?",
+                            "next": "material_locations",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Sounds challenging.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "material_locations": {
+                    "id": 3,
+                    "text": "Mithril can be found in the deepest mines of the Misty Mountains. Dragon scales... well, you'd need to slay a dragon for those! As for enchanted gems, try the ancient ruins or magical places.",
+                    "responses": [
+                        {
+                            "text": "I'll see what I can find.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "blacksmith_lore": {
+                    "id": 4,
+                    "text": "I learned my trade from the dwarven masters in the mountain halls. Their techniques for folding steel and binding magic into metal are unmatched. Every piece I forge carries a bit of that ancient knowledge.",
+                    "responses": [
+                        {
+                            "text": "Impressive. Tell me more.",
+                            "next": "dwarven_techniques",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Let's talk about something else.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "dwarven_techniques": {
+                    "id": 5,
+                    "text": "The dwarves taught me that every strike of the hammer must have purpose, every fold of the metal must align with its natural grain. Patience and precision - that's the secret to truly masterful metalwork.",
+                    "responses": [
+                        {
+                            "text": "Fascinating craftsmanship.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "goodbye": {
+                    "id": -1,
+                    "text": "May your blade stay sharp and your armor hold strong! Come back when you need proper equipment.",
+                    "action": "end_conversation"
+                }
+            }
         },
-        {
-            "id": -1,
-            "text": "Come back anytime!",
-            "action": "leave_shop"
+        
+        "tavern_keeper": {
+            "name": "Tavern Keeper Magnus",
+            "greeting": "Welcome to The Thirsty Hare! Pull up a chair and I'll get you something to warm your bones.",
+            "dialogues": {
+                "default": {
+                    "id": 0,
+                    "text": "What can I get for you today, traveler?",
+                    "responses": [
+                        {
+                            "text": "I'd like some food and drink.",
+                            "next": "tavern_services",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Any interesting news or rumors?",
+                            "next": "tavern_rumors",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Can I rest here for the night?",
+                            "next": "lodging",
+                            "requirements": []
+                        },
+                        {
+                            "text": "I need to leave.",
+                            "next": "goodbye",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "tavern_services": {
+                    "id": 1,
+                    "text": "I've got hearty stew, fresh bread, and ale that'll put hair on your chest! All reasonably priced for a weary adventurer.",
+                    "responses": [
+                        {
+                            "text": "I'll have a meal and drink. (Cost: 5 gold)",
+                            "next": "purchase_meal",
+                            "action": "buy_meal",
+                            "requirements": ["gold:5"]
+                        },
+                        {
+                            "text": "Just information today.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "purchase_meal": {
+                    "id": 2,
+                    "text": "Here you go! Nothing like a good meal to restore your strength. That should heal you right up!",
+                    "action": "heal_player",
+                    "responses": [
+                        {
+                            "text": "Thank you, that was delicious.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "tavern_rumors": {
+                    "id": 3,
+                    "text": "Oh, I hear all sorts of tales! Merchants speak of strange lights in the Dark Forest, farmers complain about goblin raids, and there's talk of a missing caravan. Plus, some adventurers claim to have seen movement in the old castle ruins.",
+                    "responses": [
+                        {
+                            "text": "Tell me more about these lights.",
+                            "next": "forest_lights_rumor",
+                            "requirements": []
+                        },
+                        {
+                            "text": "What about the castle ruins?",
+                            "next": "castle_rumor",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Anything else interesting?",
+                            "next": "more_rumors",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "forest_lights_rumor": {
+                    "id": 4,
+                    "text": "Strange, ethereal lights dancing among the trees at night. Some say they're spirits of lost travelers, others think it's wild magic. Either way, it's got the locals spooked.",
+                    "responses": [
+                        {
+                            "text": "Has anyone investigated?",
+                            "next": "investigation_attempts",
+                            "requirements": []
+                        },
+                        {
+                            "text": "What other rumors do you know?",
+                            "next": "tavern_rumors",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "castle_rumor": {
+                    "id": 5,
+                    "text": "The old castle's been abandoned for decades, but lately folks have reported seeing torchlight in the windows at night. Could be bandits using it as a hideout, or something worse...",
+                    "responses": [
+                        {
+                            "text": "Something worse?",
+                            "next": "castle_dangers",
+                            "requirements": []
+                        },
+                        {
+                            "text": "Tell me about other rumors.",
+                            "next": "tavern_rumors",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "castle_dangers": {
+                    "id": 6,
+                    "text": "Well, the castle fell during dark times. Some say cursed creatures still roam its halls, others whisper of ancient treasures guarded by undead sentinels. Probably just stories... probably.",
+                    "responses": [
+                        {
+                            "text": "Interesting. What else do you know?",
+                            "next": "tavern_rumors",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "lodging": {
+                    "id": 7,
+                    "text": "Of course! A room for the night costs 10 gold and includes a hot meal in the morning. You'll wake up refreshed and ready for adventure!",
+                    "responses": [
+                        {
+                            "text": "I'll take a room. (Cost: 10 gold)",
+                            "next": "purchase_room",
+                            "action": "rest_at_inn",
+                            "requirements": ["gold:10"]
+                        },
+                        {
+                            "text": "Too expensive for me right now.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "purchase_room": {
+                    "id": 8,
+                    "text": "Excellent! Your room is upstairs, second door on the right. Sleep well, and I'll have breakfast ready when you wake.",
+                    "action": "advance_day",
+                    "responses": [
+                        {
+                            "text": "Thank you for the hospitality.",
+                            "next": "default",
+                            "requirements": []
+                        }
+                    ]
+                },
+                "goodbye": {
+                    "id": -1,
+                    "text": "Safe travels, friend! The Thirsty Hare will always have a warm welcome waiting for you.",
+                    "action": "end_conversation"
+                }
+            }
         }
-    ],
-
-    "Kiki": [
-        {
-            "id": 0,
-            "text": "Need something? I gotta potion for that!",
-            "responses": [
-                {"text": "Potions? What kind of potions?", "next_id": 1},
-                {"text": "I'll take a look at what you got!", "next_id": 2},
-                {"text": "I'm just browsing.", "next_id": 3},
-                {"text": "I need to leave.", "next_id": -1}
-            ]
-        },
-        {
-            "id": 1,
-            "text": "Well, you'll have to take a look silly!",
-            "action": "see_wares"
-        },
-        {
-            "id": 2,
-            "text": "You won't be disappointed!",
-            "action": "see_wares"
-        },
-        {
-            "id": 3,
-            "text": "Take all the time you need!",
-            "action": "browsing"
-        },
-        {
-            "id": -1,
-            "text": "You'll be back...",
-            "action": "leave_shop"
-        }
-    ]
+    }
 }

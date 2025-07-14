@@ -1,5 +1,5 @@
 {
-    "Elder Kita": {
+    "elder_kita": {
         "id": 1,
         "name": "Elder Kita",
         "type": "Political Figure",
@@ -60,8 +60,7 @@
         ],
         "default_relationship": 5
     },
-    "Clement Bugbee": {
-        "id": 2,
+    "clement_bugbee": {
         "name": "Clement Bugbee",
         "type": "Merchant",
         "role": "Shopkeeper",
@@ -106,8 +105,59 @@
         ],
         "default_relationship": 0
     },
-    "Kiki": {
-        "id": 3,
+    "tianna": {
+        "name": "Tianna",
+        "type": "NPC",
+        "role": "Villager",
+        "locations": ["Village"],
+        "dialogues": [
+            {
+                "id": 0,
+                "text": "Hello there! It's a lovely day, isn't it?",
+                "responses": [
+                    {
+                        "text": "Yes, it is! What are you up to?",
+                        "next_id": 1
+                    },
+                    {
+                        "text": "Not really. I'm just passing through.",
+                        "next_id": 2
+                    }
+                ]
+            },
+            {
+                "id": 1,
+                "text": "Just tending to my garden. Care to help?",
+                "responses": [
+                    {
+                        "text": "Sure! What do you need?",
+                        "next_id": 3
+                    },
+                    {
+                        "text": "Maybe another time.",
+                        "next_id": 4
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "text": "Well, safe travels then!",
+                "responses": []
+            },
+            {
+                "id": 3,
+                "text": "Thank you! I could use an extra pair of hands.",
+                "responses": []
+            },
+            {
+                "id": 4,
+                "text": "That's alright. Have a great day!",
+                "responses": []
+            }
+        ],
+        "default_relationship": 0
+    },
+    "kiki": {
         "name": "Kiki",
         "type": "Merchant",
         "role": "Potion Merchant",

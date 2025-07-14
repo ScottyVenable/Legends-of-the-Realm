@@ -11,7 +11,7 @@ class Character {
         this.health = 10;
         this.maxHealth = 10;
         this.gold = 10;
-        this.location = 'Village';
+        this.location = 'millhaven';
         this.inventory = [];
         this.equipment = {
             weapon: null,
@@ -445,7 +445,24 @@ class Character {
         character.health = saveData.health || 10;
         character.maxHealth = saveData.maxHealth || 10;
         character.gold = saveData.gold || 10;
-        character.location = saveData.location || 'Village';
+        character.location = saveData.location || 'millhaven';
+        
+        // Handle legacy location names
+        if (character.location === 'Village' || character.location === 'Millhaven') {
+            character.location = 'millhaven';
+        } else if (character.location === 'Forest Path') {
+            character.location = 'forest_path';
+        } else if (character.location === 'Goblin Camp') {
+            character.location = 'goblin_camp';
+        } else if (character.location === 'Bandit Lair') {
+            character.location = 'bandit_lair';
+        } else if (character.location === 'Capital City') {
+            character.location = 'capital_city';
+        } else if (character.location === 'Mountain Pass') {
+            character.location = 'mountain_pass';
+        } else if (character.location === "Dragon's Lair") {
+            character.location = 'dragons_lair';
+        }
         character.inventory = saveData.inventory || [];
         character.equipment = saveData.equipment || { weapon: null, armor: null, accessory: null };
         character.attributes = saveData.attributes || {

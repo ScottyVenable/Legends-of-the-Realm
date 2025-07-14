@@ -7,9 +7,11 @@ class DeveloperTools {
         this.consoleHistory = [];
         this.consoleHistoryIndex = -1;
         this.commands = {};
+        this.presetData = null; // Store loaded preset data
         
         this.setupCommands();
         this.setupKeyListener();
+        this.loadPresetData(); // Load presets on initialization
     }
 
     // Initialize developer mode
@@ -39,7 +41,17 @@ class DeveloperTools {
                 const questIds = ['goblin_threat', 'lost_treasure', 'missing_child', 'cursed_artifact'];
                 questIds.forEach(id => window.gameEngine.addQuest(id));
                 console.log('Test quests added! Check your journal.');
-            }
+            },
+            // Preset character shortcuts
+            loadPreset: (type) => this.loadPresetCharacter(type),
+            warrior: () => this.loadPresetCharacter('warrior'),
+            rogue: () => this.loadPresetCharacter('rogue'),
+            wizard: () => this.loadPresetCharacter('wizard'),
+            cleric: () => this.loadPresetCharacter('cleric'),
+            ranger: () => this.loadPresetCharacter('ranger'),
+            barbarian: () => this.loadPresetCharacter('barbarian'),
+            maxed: () => this.loadPresetCharacter('maxed'),
+            merchant: () => this.loadPresetCharacter('merchant')
         };
     }
 
@@ -333,6 +345,7 @@ class DeveloperTools {
                         <div style="margin-bottom: 5px; font-weight: bold;">MENU</div>
                         <button onclick="window.dev.tools.showConsole()" class="dev-menu-btn">Console</button>
                         <button onclick="window.dev.tools.showCheats()" class="dev-menu-btn">Cheats</button>
+                        <button onclick="window.dev.tools.showPresetCharacters()" class="dev-menu-btn">Preset Characters</button>
                         <button onclick="window.dev.tools.showDataViewer()" class="dev-menu-btn">Data Viewer</button>
                         <button onclick="window.dev.tools.showGameState()" class="dev-menu-btn">Game State</button>
                         <button onclick="window.dev.tools.showPerformance()" class="dev-menu-btn">Performance</button>
@@ -737,6 +750,437 @@ Developer Tools Help:
   * dev.showData(type)
   * dev.help()
         `);
+    }
+
+    // Load preset data from JSON file
+    async loadPresetData() {
+        try {
+            const response = await fetch('./data/character_presets.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            this.presetData = data;
+            console.log('Character presets loaded successfully');
+        } catch (error) {
+            console.error('Failed to load character presets:', error);
+            this.presetData = []; // Fallback to empty array
+        }
+    }
+
+    // Show preset characters interface
+    showPresetCharacters() {
+        const content = document.getElementById('dev-content');
+        
+        if (!this.presetData || this.presetData.length === 0) {
+            content.innerHTML = `
+                <div style="margin-bottom: 10px; font-weight: bold;">PRESET CHARACTERS</div>
+                <div style="color: #ff6666;">Error: Could not load character presets. Check console for details.</div>
+                <button onclick="window.dev.tools.loadPresetData().then(() => window.dev.tools.showPresetCharacters())" class="dev-menu-btn" style="margin-top: 10px;">Retry Loading</button>
+            `;
+            return;
+        }
+
+        let presetsHTML = '';
+        this.presetData.forEach((preset, index) => {
+            const classIcon = this.getClassIcon(preset.characterClass);
+            const levelColor = preset.level >= 15 ? '#ff6600' : preset.level >= 10 ? '#ffaa00' : '#ffaa00';
+            
+            presetsHTML += `
+                <div style="border: 1px solid #00ff00; padding: 10px; border-radius: 5px; background: #1a2a1a; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: bold; color: ${levelColor};">${classIcon} ${preset.name}</div>
+                            <div style="color: #888; font-size: 11px;">${preset.gender} ${preset.race} ${preset.characterClass} - Level ${preset.level}</div>
+                            <div style="color: #888; font-size: 10px; margin-top: 2px;">
+                                STR: ${preset.attributes.strength}, DEX: ${preset.attributes.dexterity}, CON: ${preset.attributes.constitution}, 
+                                INT: ${preset.attributes.intelligence}, WIS: ${preset.attributes.wisdom}, CHA: ${preset.attributes.charisma}
+                            </div>
+                            <div style="color: #888; font-size: 10px; margin-top: 2px;">
+                                Gold: ${preset.gold} | Health: ${preset.health}/${preset.maxHealth}
+                            </div>
+                        </div>
+                        <button onclick="window.dev.tools.loadPresetCharacterByIndex(${index})" class="dev-menu-btn" style="width: 80px;">Load</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        content.innerHTML = `
+            <div style="margin-bottom: 10px; font-weight: bold;">PRESET CHARACTERS</div>
+            <div style="margin-bottom: 10px; color: #888;">Load pre-configured characters for testing:</div>
+            
+            <div style="max-height: 400px; overflow-y: auto;">
+                ${presetsHTML}
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #2a2a1a; border-radius: 5px; border: 1px solid #666;">
+                <div style="color: #888; font-size: 11px;">
+                    <strong>Note:</strong> Loading a preset character will replace your current character data. 
+                    Make sure to save your current progress first if you want to keep it.
+                </div>
+            </div>
+        `;
+    }
+
+    // Get class icon for display
+    getClassIcon(characterClass) {
+        const icons = {
+            'Fighter': '⚔️',
+            'Rogue': '🗡️',
+            'Wizard': '🔮',
+            'Cleric': '✨',
+            'Ranger': '🏹',
+            'Barbarian': '🪓',
+            'Noble': '👑',
+            'Witcher': '🐺'
+        };
+        return icons[characterClass] || '⚔️';
+    }
+
+    // Load preset character by index
+    loadPresetCharacterByIndex(index) {
+        if (!this.presetData || !this.presetData[index]) {
+            return `Preset character at index ${index} not found.`;
+        }
+
+        const presetData = this.presetData[index];
+        
+        // Check if we're in the main menu or title screen and show warning
+        if (window.gameEngine && (window.gameEngine.gameState === 'title' || window.gameEngine.gameState === 'character-creation')) {
+            this.showPresetWarningDialog(index, presetData);
+            return `Showing confirmation dialog for ${presetData.name}`;
+        }
+        
+        // If we're already in-game, load directly
+        this.actuallyLoadPresetCharacter(index, presetData);
+        return `Loaded preset character: ${presetData.name}`;
+    }
+
+    // Load preset character data (updated to work with JSON data)
+    loadPresetCharacter(presetName) {
+        if (!this.presetData) {
+            return 'Preset data not loaded. Please wait and try again.';
+        }
+
+        // Find preset by name (case-insensitive partial match)
+        const preset = this.presetData.find(p => 
+            p.name.toLowerCase().includes(presetName.toLowerCase()) ||
+            p.characterClass.toLowerCase() === presetName.toLowerCase()
+        );
+        
+        if (!preset) {
+            return `Preset character "${presetName}" not found.`;
+        }
+
+        const index = this.presetData.indexOf(preset);
+        return this.loadPresetCharacterByIndex(index);
+    }
+
+    // Show warning dialog for preset character loading
+    showPresetWarningDialog(index, presetData) {
+        if (!window.gameEngine || !window.gameEngine.showModal) {
+            console.error('Game engine or modal system not available');
+            return;
+        }
+
+        const warningHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <div style="color: #ff6b6b; font-size: 18px; margin-bottom: 15px;">
+                    ⚠️ Start New Game Warning ⚠️
+                </div>
+                <div style="margin-bottom: 20px; line-height: 1.6;">
+                    <p>This will start a new game with <strong>${presetData.name}</strong>.</p>
+                    <p style="color: #ffa500;">Any existing progress will be lost!</p>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                    <button onclick="window.developerTools.confirmPresetLoad(${index})" 
+                            style="background: #e74c3c; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        Start New Game
+                    </button>
+                    <button onclick="window.gameEngine.closeModal()" 
+                            style="background: #95a5a6; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+
+        window.gameEngine.showModal(warningHTML, 'Load Preset Character');
+    }
+
+    // Confirm preset character load and start new game
+    confirmPresetLoad(index) {
+        // Close the modal first
+        if (window.gameEngine && window.gameEngine.closeModal) {
+            window.gameEngine.closeModal();
+        }
+
+        if (!this.presetData || !this.presetData[index]) {
+            console.error(`Preset at index ${index} not found`);
+            return;
+        }
+
+        const presetData = this.presetData[index];
+
+        // Start a new game and then load the preset character
+        if (window.gameEngine && window.gameEngine.startNewGame) {
+            // Clear any existing save data
+            localStorage.removeItem('legends_of_the_realm_save');
+            
+            // Start new game
+            window.gameEngine.startNewGame();
+            
+            // Wait for character creation to initialize, then load preset
+            setTimeout(() => {
+                this.actuallyLoadPresetCharacter(index, presetData);
+                
+                // Skip character creation and go directly to game
+                if (window.gameEngine) {
+                    window.gameEngine.gameState = 'playing';
+                    window.gameEngine.switchScreen('game-screen');
+                    window.gameEngine.updateCharacterDisplay();
+                    
+                    // Play game music
+                    if (window.audioManager && window.audioManager.playMusic) {
+                        window.audioManager.playMusic('traveling');
+                    }
+                }
+                
+                console.log(`Started new game with preset character: ${presetData.name}`);
+            }, 100);
+        }
+    }
+
+    // Actually load the preset character data (updated to work with index)
+    actuallyLoadPresetCharacter(index, presetData) {
+        const character = window.gameCharacter;
+        if (!character) {
+            console.error('Game character not available');
+            return;
+        }
+
+        // Load character data
+        character.name = presetData.name;
+        character.gender = presetData.gender;
+        character.race = presetData.race;
+        character.characterClass = presetData.characterClass;
+        character.background = presetData.background;
+        character.level = presetData.level;
+        character.experience = presetData.experience;
+        character.health = presetData.health;
+        character.maxHealth = presetData.maxHealth;
+        character.gold = presetData.gold;
+        character.location = presetData.location;
+        character.quests = presetData.quests || [];
+        character.completedQuests = presetData.completedQuests || [];
+        
+        // Set attributes
+        if (presetData.attributes) {
+            character.attributes = { ...presetData.attributes };
+        }
+        
+        // Set inventory
+        character.inventory = [...(presetData.inventory || [])];
+        
+        // Set equipment
+        if (presetData.equipment) {
+            character.equipment = { ...presetData.equipment };
+        }
+        
+        // Update display if we're in game
+        if (window.gameEngine && window.gameEngine.updateCharacterDisplay) {
+            window.gameEngine.updateCharacterDisplay();
+        }
+    }
+
+    showMessage(message, type = 'info') {
+        // Add to console output
+        const output = document.getElementById('console-output');
+        if (output) {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#00ff00';
+            output.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Show in game if available
+        if (window.gameEngine && window.gameEngine.showMessage) {
+            window.gameEngine.showMessage(message, type);
+        }
+    }
+}
+
+// Initialize developer tools
+window.developerTools = new DeveloperTools();
+                location: "millhaven",
+                inventory: ["Fine Wine", "Silk Clothes", "Trade Goods", "Merchant's Seal"],
+                equipment: { weapon: "Ornate Dagger", armor: "Fine Clothes", accessory: "Gold Ring" },
+                attributes: { strength: 10, dexterity: 14, constitution: 12, intelligence: 16, wisdom: 14, charisma: 18 },
+                skills: {},
+                quests: [],
+                completedQuests: []
+            }
+        };
+        
+        const presetData = presets[preset];
+        if (!presetData) {
+            return `Preset character "${preset}" not found.`;
+        }
+
+        // Check if we're in the main menu or title screen and show warning
+        if (window.gameEngine && (window.gameEngine.gameState === 'title' || window.gameEngine.gameState === 'character-creation')) {
+            this.showPresetWarningDialog(preset, presetData);
+            return `Showing confirmation dialog for ${presetData.name}`;
+        }
+        
+        // If we're already in-game, load directly
+        this.actuallyLoadPresetCharacter(preset, presetData);
+        return `Loaded preset character: ${presetData.name}`;
+    }
+
+    // Show warning dialog for preset character loading
+    showPresetWarningDialog(preset, presetData) {
+        if (!window.gameEngine || !window.gameEngine.showModal) {
+            console.error('Game engine or modal system not available');
+            return;
+        }
+
+        const warningHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <div style="color: #ff6b6b; font-size: 18px; margin-bottom: 15px;">
+                    ⚠️ Start New Game Warning ⚠️
+                </div>
+                <div style="margin-bottom: 20px; line-height: 1.6;">
+                    <p>This will start a new game with <strong>${presetData.name}</strong>.</p>
+                    <p style="color: #ffa500;">Any existing progress will be lost!</p>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 25px;">
+                    <button onclick="window.developerTools.confirmPresetLoad('${preset}')" 
+                            style="background: #e74c3c; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        Start New Game
+                    </button>
+                    <button onclick="window.gameEngine.closeModal()" 
+                            style="background: #95a5a6; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+
+        window.gameEngine.showModal(warningHTML, 'Load Preset Character');
+    }
+
+    // Confirm preset character load and start new game
+    confirmPresetLoad(preset) {
+        // Close the modal first
+        if (window.gameEngine && window.gameEngine.closeModal) {
+            window.gameEngine.closeModal();
+        }
+
+        // Get preset data again
+        const presets = {
+            warrior: { name: "Krolag the Mighty", gender: "Male", race: "Orc", characterClass: "Fighter", background: "Soldier", level: 3, experience: 150, health: 28, maxHealth: 28, gold: 500, location: "millhaven", inventory: ["Healing Potion", "Rations"], equipment: { weapon: "Iron Sword", armor: "Chainmail", accessory: null }, attributes: { strength: 18, dexterity: 14, constitution: 16, intelligence: 8, wisdom: 12, charisma: 10 }, skills: {}, quests: [], completedQuests: [] },
+            rogue: { name: "Senna Shadowstep", gender: "Female", race: "Elf", characterClass: "Rogue", background: "Criminal", level: 3, experience: 150, health: 22, maxHealth: 22, gold: 750, location: "millhaven", inventory: ["Healing Potion", "Thieves' Tools", "Lockpicks"], equipment: { weapon: "Short Sword", armor: "Leather Armor", accessory: null }, attributes: { strength: 12, dexterity: 18, constitution: 14, intelligence: 14, wisdom: 16, charisma: 12 }, skills: {}, quests: [], completedQuests: [] },
+            wizard: { name: "Thalion Starweaver", gender: "Male", race: "Human", characterClass: "Wizard", background: "Scholar", level: 3, experience: 150, health: 18, maxHealth: 18, gold: 300, location: "millhaven", inventory: ["Healing Potion", "Spellbook", "Component Pouch"], equipment: { weapon: "Staff", armor: "Robes", accessory: null }, attributes: { strength: 8, dexterity: 14, constitution: 14, intelligence: 18, wisdom: 16, charisma: 12 }, skills: {}, quests: [], completedQuests: [] },
+            cleric: { name: "Lyra Dawnbringer", gender: "Female", race: "Dwarf", characterClass: "Cleric", background: "Acolyte", level: 3, experience: 150, health: 26, maxHealth: 26, gold: 400, location: "millhaven", inventory: ["Healing Potion", "Holy Symbol", "Prayer Book"], equipment: { weapon: "Mace", armor: "Scale Mail", accessory: null }, attributes: { strength: 14, dexterity: 10, constitution: 16, intelligence: 12, wisdom: 18, charisma: 14 }, skills: {}, quests: [], completedQuests: [] },
+            ranger: { name: "Kael Windstrider", gender: "Male", race: "Halfling", characterClass: "Ranger", background: "Outlander", level: 3, experience: 150, health: 24, maxHealth: 24, gold: 350, location: "millhaven", inventory: ["Healing Potion", "Hunting Trap", "Survival Kit"], equipment: { weapon: "Longbow", armor: "Studded Leather", accessory: null }, attributes: { strength: 14, dexterity: 18, constitution: 14, intelligence: 12, wisdom: 16, charisma: 10 }, skills: {}, quests: [], completedQuests: [] },
+            barbarian: { name: "Grok Ironbane", gender: "Male", race: "Orc", characterClass: "Barbarian", background: "Outlander", level: 3, experience: 150, health: 32, maxHealth: 32, gold: 200, location: "millhaven", inventory: ["Healing Potion", "Tribal Necklace"], equipment: { weapon: "Greataxe", armor: "Hide Armor", accessory: null }, attributes: { strength: 18, dexterity: 14, constitution: 18, intelligence: 8, wisdom: 12, charisma: 8 }, skills: {}, quests: [], completedQuests: [] },
+            maxed: { name: "Maximus Testicus", gender: "Male", race: "Human", characterClass: "Fighter", background: "Noble", level: 20, experience: 15000, health: 200, maxHealth: 200, gold: 99999, location: "millhaven", inventory: ["Healing Potion", "Legendary Artifact", "Magic Ring", "Dragon Scale"], equipment: { weapon: "Legendary Sword", armor: "Plate Armor", accessory: "Ring of Power" }, attributes: { strength: 20, dexterity: 20, constitution: 20, intelligence: 20, wisdom: 20, charisma: 20 }, skills: {}, quests: [], completedQuests: [] },
+            merchant: { name: "Goldbert Richman", gender: "Male", race: "Human", characterClass: "Noble", background: "Guild Merchant", level: 5, experience: 500, health: 30, maxHealth: 30, gold: 50000, location: "millhaven", inventory: ["Fine Wine", "Silk Clothes", "Trade Goods", "Merchant's Seal"], equipment: { weapon: "Ornate Dagger", armor: "Fine Clothes", accessory: "Gold Ring" }, attributes: { strength: 10, dexterity: 14, constitution: 12, intelligence: 16, wisdom: 14, charisma: 18 }, skills: {}, quests: [], completedQuests: [] }
+        };
+
+        const presetData = presets[preset];
+        if (!presetData) {
+            console.error(`Preset "${preset}" not found`);
+            return;
+        }
+
+        // Start a new game and then load the preset character
+        if (window.gameEngine && window.gameEngine.startNewGame) {
+            // Clear any existing save data
+            localStorage.removeItem('legends_of_the_realm_save');
+            
+            // Start new game
+            window.gameEngine.startNewGame();
+            
+            // Wait for character creation to initialize, then load preset
+            setTimeout(() => {
+                this.actuallyLoadPresetCharacter(preset, presetData);
+                
+                // Skip character creation and go directly to game
+                if (window.gameEngine) {
+                    window.gameEngine.gameState = 'playing';
+                    window.gameEngine.switchScreen('game-screen');
+                    window.gameEngine.updateCharacterDisplay();
+                    
+                    // Play game music
+                    if (window.audioManager && window.audioManager.playMusic) {
+                        window.audioManager.playMusic('traveling');
+                    }
+                }
+                
+                console.log(`Started new game with preset character: ${presetData.name}`);
+            }, 100);
+        }
+    }
+
+    // Actually load the preset character data (separated for reuse)
+    actuallyLoadPresetCharacter(preset, presetData) {
+        const character = window.gameCharacter;
+        if (!character) {
+            console.error('Game character not available');
+            return;
+        }
+
+        // Load character data
+        character.name = presetData.name;
+        character.gender = presetData.gender;
+        character.race = presetData.race;
+        character.characterClass = presetData.characterClass;
+        character.background = presetData.background;
+        character.level = presetData.level;
+        character.experience = presetData.experience;
+        character.health = presetData.health;
+        character.maxHealth = presetData.maxHealth;
+        character.gold = presetData.gold;
+        character.location = presetData.location;
+        character.quests = presetData.quests || [];
+        character.completedQuests = presetData.completedQuests || [];
+        
+        // Set attributes
+        if (presetData.attributes) {
+            character.attributes = { ...presetData.attributes };
+        }
+        
+        // Set inventory
+        character.inventory = [...(presetData.inventory || [])];
+        
+        // Set equipment
+        if (presetData.equipment) {
+            character.equipment = { ...presetData.equipment };
+        }
+        
+        // Update display if we're in game
+        if (window.gameEngine && window.gameEngine.updateCharacterDisplay) {
+            window.gameEngine.updateCharacterDisplay();
+        }
+    }
+
+    showMessage(message, type = 'info') {
+        // Add to console output
+        const output = document.getElementById('console-output');
+        if (output) {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#00ff00';
+            output.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Show in game if available
+        if (window.gameEngine && window.gameEngine.showMessage) {
+            window.gameEngine.showMessage(message, type);
+        }
     }
 }
 

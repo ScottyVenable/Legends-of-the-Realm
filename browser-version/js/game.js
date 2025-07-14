@@ -11,6 +11,9 @@ class GameEngine {
         this.dayStartTime = Date.now();
         this.shopSalesCache = {}; // Cache shop sales per day
         
+        // Dialogue system
+        this.currentDialogue = null;
+        
         // Journal system - will be populated from data files
         this.journal = {
             rumors: [],
@@ -173,6 +176,23 @@ class GameEngine {
         if (window.audioManager && window.audioManager.isInitialized) {
             console.log('Starting title music...');
             window.audioManager.playMusic('title');
+        }
+    }
+
+    // Switch between different game screens
+    switchScreen(screenId) {
+        // Hide all screens
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(screen => {
+            screen.classList.remove('active');
+        });
+
+        // Show the requested screen
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+        } else {
+            console.error(`Screen ${screenId} not found`);
         }
     }
 
@@ -438,8 +458,8 @@ class GameEngine {
         // Initialize starting quests (for demo purposes)
         this.initializeStartingQuests();
         
-        // Start at Village
-        this.moveToLocation('Village');
+        // Start at Millhaven
+        this.moveToLocation('millhaven');
         
         // Ensure fullscreen for game experience
         if (window.enterFullscreenOnGameStart) {
@@ -495,6 +515,27 @@ class GameEngine {
 
         // Play location-specific music
         this.playLocationMusic(locationName);
+    }
+
+    // Play location-specific music
+    playLocationMusic(locationName) {
+        if (!window.audioManager || !window.audioManager.isInitialized) {
+            return;
+        }
+
+        // Map locations to music tracks
+        const locationMusic = {
+            'millhaven': 'traveling',
+            'forest_path': 'traveling', 
+            'goblin_camp': 'battle',
+            'bandit_lair': 'battle',
+            'capital_city': 'traveling',
+            'mountain_pass': 'traveling',
+            'dragons_lair': 'battle'
+        };
+
+        const musicTrack = locationMusic[locationName] || 'traveling';
+        window.audioManager.playMusic(musicTrack);
     }
 
     // Generate interactive options for current location
@@ -671,12 +712,221 @@ class GameEngine {
             window.audioManager.playSFX('click');
         }
         
-        const npcData = window.dataManager.getNPC(npcName);
+        // Convert display name to ID for dialogue system
+        const npcId = window.dataManager.getNPCIdFromName(npcName);
+        const npcData = window.dataManager.getNPC(npcId);
         if (npcData) {
-            this.showModal(`Talking to ${npcName}`, npcData.dialogue || `${npcName} greets you.`);
+            // Try to get dialogue data from the new dialogue system
+            const dialogueInfo = window.dataManager.getNPCDialogueInfo(npcId);
+            
+            if (dialogueInfo && dialogueInfo.hasDialogues) {
+                this.startDialogue(npcId);
+            } else {
+                // Fallback to simple dialogue from NPC data
+                const fallbackText = npcData.dialogue || dialogueInfo?.greeting || `${npcData.name || npcName} greets you.`;
+                this.showModal(`Talking to ${npcData.name || npcName}`, fallbackText);
+            }
         } else {
             this.showMessage(`You approach ${npcName}.`);
         }
+    }
+    
+    // Start interactive dialogue with an NPC
+    startDialogue(npcName, dialogueKey = 'default') {
+        const dialogueData = window.dataManager.getDialogue(npcName, dialogueKey);
+        if (!dialogueData) {
+            this.showMessage(`${npcName} doesn't seem to want to talk right now.`);
+            return;
+        }
+        
+        this.currentDialogue = {
+            npcName: npcName,
+            currentKey: dialogueKey,
+            data: dialogueData
+        };
+        
+        this.showDialogueModal(dialogueData);
+    }
+    
+    // Show dialogue modal with interactive responses
+    showDialogueModal(dialogueData) {
+        const dialogue = dialogueData.dialogue;
+        
+        let dialogueHTML = `
+            <div class="dialogue-container">
+                <div class="npc-info" style="background: rgba(139, 69, 19, 0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="color: #d4af37; margin: 0 0 0.5rem 0;">${dialogueData.npcName}</h4>
+                    <p style="color: #e8d5b7; margin: 0; font-style: italic;">"${dialogueData.greeting}"</p>
+                </div>
+                
+                <div class="dialogue-text" style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <p style="color: #e8d5b7; margin: 0; font-size: 1rem; line-height: 1.5;">${dialogue.text}</p>
+                </div>
+        `;
+        
+        if (dialogue.responses && dialogue.responses.length > 0) {
+            dialogueHTML += `
+                <div class="dialogue-responses" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <h5 style="color: #d4af37; margin: 0 0 0.5rem 0;">Choose your response:</h5>
+            `;
+            
+            dialogue.responses.forEach((response, index) => {
+                // Check if response requirements are met
+                const canChoose = this.checkDialogueRequirements(response.requirements || []);
+                const buttonStyle = canChoose 
+                    ? 'background: linear-gradient(45deg, #8b4513, #a0522d); color: #e8d5b7; cursor: pointer;'
+                    : 'background: linear-gradient(45deg, #666, #888); color: #999; cursor: not-allowed;';
+                
+                dialogueHTML += `
+                    <button onclick="gameEngine.chooseDialogueResponse('${response.next}', '${response.action || ''}', ${index})" 
+                            style="${buttonStyle} border: 1px solid #d4af37; padding: 0.75rem; border-radius: 4px; font-family: 'Cinzel', serif; font-size: 0.9rem;"
+                            ${!canChoose ? 'disabled' : ''}>
+                        ${response.text}
+                    </button>
+                `;
+            });
+            
+            dialogueHTML += '</div>';
+        } else {
+            // End of conversation
+            dialogueHTML += `
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button onclick="gameEngine.closeModal()" 
+                            style="background: linear-gradient(45deg, #8b4513, #a0522d); color: #e8d5b7; border: 1px solid #d4af37; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-family: 'Cinzel', serif;">
+                        End Conversation
+                    </button>
+                </div>
+            `;
+        }
+        
+        dialogueHTML += '</div>';
+        
+        this.showModal(`Conversation with ${dialogueData.npcName}`, dialogueHTML, true);
+    }
+    
+    // Choose a dialogue response
+    chooseDialogueResponse(nextKey, action, responseIndex) {
+        if (action) {
+            this.executeDialogueAction(action);
+        }
+        
+        if (nextKey === 'goodbye' || nextKey === 'end_conversation') {
+            this.closeModal();
+            return;
+        }
+        
+        if (nextKey && this.currentDialogue) {
+            this.startDialogue(this.currentDialogue.npcName, nextKey);
+        } else {
+            this.closeModal();
+        }
+    }
+    
+    // Execute dialogue actions
+    executeDialogueAction(action) {
+        if (!action) return;
+        
+        const [actionType, actionValue] = action.split(':');
+        
+        switch (actionType) {
+            case 'start_quest':
+                if (window.questManager) {
+                    window.questManager.addQuest(actionValue);
+                    this.showMessage(`Quest started: ${actionValue}`, 3000);
+                }
+                break;
+            case 'open_shop':
+                setTimeout(() => {
+                    this.closeModal();
+                    // Map NPC ID to shop name
+                    const shopMapping = {
+                        'clement_bugbee': "Bugbee's Blades & Brews",
+                        'tianna': "The Thirsty Hare",
+                        'kiki': "Kiki's Potions"
+                    };
+                    const shopName = shopMapping[this.currentDialogue.npcName] || actionValue;
+                    this.enterShop(shopName);
+                }, 500);
+                break;
+            case 'buy_meal':
+                if (window.gameCharacter && window.gameCharacter.spendGold(5)) {
+                    window.gameCharacter.heal(10);
+                    this.updateCharacterDisplay();
+                    this.showMessage('You enjoy a hearty meal and feel refreshed!', 3000);
+                } else {
+                    this.showMessage('You don\'t have enough gold for a meal.', 3000);
+                }
+                break;
+            case 'rest_at_inn':
+                if (window.gameCharacter && window.gameCharacter.spendGold(10)) {
+                    window.gameCharacter.heal();
+                    this.advanceDay();
+                    this.updateCharacterDisplay();
+                    this.showMessage('You rest comfortably at the inn and wake refreshed for a new day!', 4000);
+                } else {
+                    this.showMessage('You don\'t have enough gold for a room.', 3000);
+                }
+                break;
+            case 'heal_player':
+                if (window.gameCharacter) {
+                    window.gameCharacter.heal(15);
+                    this.updateCharacterDisplay();
+                }
+                break;
+            case 'advance_day':
+                this.advanceDay();
+                this.updateCharacterDisplay();
+                break;
+            case 'end_conversation':
+                this.closeModal();
+                break;
+            default:
+                console.log(`Unknown dialogue action: ${action}`);
+        }
+    }
+    
+    // Check if dialogue requirements are met
+    checkDialogueRequirements(requirements) {
+        if (!requirements || requirements.length === 0) return true;
+        
+        for (const requirement of requirements) {
+            const [reqType, reqValue] = requirement.split(':');
+            
+            switch (reqType) {
+                case 'gold':
+                    if (!window.gameCharacter || window.gameCharacter.gold < parseInt(reqValue)) {
+                        return false;
+                    }
+                    break;
+                case 'level':
+                    if (!window.gameCharacter || window.gameCharacter.level < parseInt(reqValue)) {
+                        return false;
+                    }
+                    break;
+                case 'quest_active':
+                    if (!window.questManager) {
+                        return false;
+                    }
+                    // Check if quest manager has the quest active
+                    if (window.questManager.playerQuests && !window.questManager.playerQuests.has(reqValue)) {
+                        return false;
+                    }
+                    break;
+                case 'quest_completed':
+                    if (!window.questManager) {
+                        return false;
+                    }
+                    // Check if quest is completed
+                    const quest = window.questManager.playerQuests ? window.questManager.playerQuests.get(reqValue) : null;
+                    if (!quest || quest.status !== 'completed') {
+                        return false;
+                    }
+                    break;
+                // Add more requirement types as needed
+            }
+        }
+        
+        return true;
     }
 
     // Enter a shop
@@ -1066,7 +1316,7 @@ class GameEngine {
     saveGame() {
         try {
             if (!window.gameCharacter) {
-                this.showMessage('No character to save!', 3000);
+                this.showMessage('No character to save!');
                 return;
             }
 
@@ -1082,12 +1332,12 @@ class GameEngine {
             };
 
             localStorage.setItem(this.saveKey, JSON.stringify(saveData));
-            this.showMessage('Game saved successfully!', 3000);
+            this.showMessage('Game saved successfully!', 'success');
             console.log(`Game saved - Day ${this.gameDay}`);
 
         } catch (error) {
             console.error('Error saving game:', error);
-            this.showMessage('Failed to save game!', 3000);
+            this.showMessage('Failed to save game!');
         }
     }
 
@@ -1096,7 +1346,7 @@ class GameEngine {
         try {
             const savedData = localStorage.getItem(this.saveKey);
             if (!savedData) {
-                this.showMessage('No saved game found!', 3000);
+                this.showMessage('No saved game found!');
                 return false;
             }
 
@@ -1106,12 +1356,33 @@ class GameEngine {
             this.gameDay = saveData.gameDay || 1;
             this.dayStartTime = saveData.dayStartTime || Date.now();
             this.shopSalesCache = saveData.shopSalesCache || {};
-            this.currentLocation = saveData.currentLocation || 'Village';
+            
+            // Handle legacy location names
+            let location = saveData.currentLocation || 'millhaven';
+            if (location === 'Village' || location === 'Millhaven') {
+                location = 'millhaven'; // Convert old save files
+            }
+            this.currentLocation = location;
+            
             this.gameState = saveData.gameState || 'playing';
             this.journal = saveData.journal || { rumors: [], quests: [] };
 
-            // Restore character
-            if (saveData.character && window.Character) {
+            // Restore character with better error handling
+            console.log('Save data check:', {
+                hasCharacter: !!saveData.character,
+                hasCharacterClass: !!window.Character,
+                characterData: saveData.character
+            });
+            
+            if (!saveData.character) {
+                throw new Error('No character data found in save file');
+            }
+            
+            if (!window.Character) {
+                throw new Error('Character class not available - character.js may not be loaded');
+            }
+            
+            try {
                 window.gameCharacter = Character.fromSaveObject(saveData.character);
                 
                 // Start the game with loaded state
@@ -1123,32 +1394,247 @@ class GameEngine {
                     window.audioManager.playMusic('traveling');
                 }
                 
-                this.showMessage('Game loaded successfully!', 3000);
+                this.showMessage('Game loaded successfully!', 'success');
                 console.log(`Game loaded - Day ${this.gameDay}`);
                 return true;
-            } else {
-                throw new Error('Invalid character data in save file');
+            } catch (characterError) {
+                console.error('Error creating character from save data:', characterError);
+                throw new Error(`Failed to restore character: ${characterError.message}`);
             }
 
         } catch (error) {
             console.error('Error loading game:', error);
-            this.showMessage('Failed to load game! Save file may be corrupted.', 3000);
+            
+            // Show detailed error and offer to clear save data
+            const errorMessage = `
+                <div style="text-align: left;">
+                    <p><strong>Failed to load save file:</strong></p>
+                    <p style="color: #ffcccc; font-family: monospace; font-size: 0.9rem; margin: 1rem 0; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 4px;">${error.message}</p>
+                    <p>This usually happens when:</p>
+                    <ul style="margin: 1rem 0; color: #ddd;">
+                        <li>Save file is from an older version</li>
+                        <li>Save file was corrupted</li>
+                        <li>Game files were updated</li>
+                    </ul>
+                    <p><strong>Would you like to clear the save data and start fresh?</strong></p>
+                </div>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button onclick="window.gameEngine.clearSaveDataAndRestart()" style="
+                        background: #8b0000;
+                        color: white;
+                        border: 1px solid #ff6666;
+                        padding: 10px 20px;
+                        margin: 0 10px;
+                        cursor: pointer;
+                        border-radius: 4px;
+                        font-family: 'Cinzel', serif;
+                    ">Clear Save & Start New Game</button>
+                    <button onclick="window.gameEngine.closeModal()" style="
+                        background: #2d4a5a;
+                        color: white;
+                        border: 1px solid #4a7c8b;
+                        padding: 10px 20px;
+                        margin: 0 10px;
+                        cursor: pointer;
+                        border-radius: 4px;
+                        font-family: 'Cinzel', serif;
+                    ">Cancel</button>
+                </div>
+            `;
+            
+            this.showModal(errorMessage, 'Save File Error');
             return false;
         }
     }
 
-    // ...existing code...
-}
+    // Clear corrupted save data (for debugging)
+    clearSaveData() {
+        try {
+            localStorage.removeItem(this.saveKey);
+            this.showMessage('Save data cleared!', 'info');
+            console.log('Save data cleared');
+        } catch (error) {
+            console.error('Error clearing save data:', error);
+            this.showMessage('Failed to clear save data!');
+        }
+    }
 
-// Create global game engine instance
-window.gameEngine = new GameEngine();
+    // Clear save data and restart game
+    clearSaveDataAndRestart() {
+        try {
+            localStorage.removeItem(this.saveKey);
+            this.showMessage('Save data cleared! Starting new game...', 'success');
+            console.log('Save data cleared and restarting');
+            
+            // Close modal and start new game
+            this.closeModal();
+            
+            // Small delay to let the user see the message
+            setTimeout(() => {
+                this.startNewGame();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error clearing save data:', error);
+            this.showMessage('Failed to clear save data!');
+        }
+    }
 
-// Initialize developer tools
-window.developerTools = new DeveloperTools();
+    // Show success/info message
+    showMessage(message, type = 'info') {
+        // Handle legacy calls where second parameter is a timeout number
+        if (typeof type === 'number') {
+            type = 'info';
+        }
+        
+        const messageDiv = document.createElement('div');
+        const bgColor = type === 'success' ? '#2d5a27' : type === 'warning' ? '#8b6914' : '#2d4a5a';
+        const borderColor = type === 'success' ? '#4a7c59' : type === 'warning' ? '#d4af37' : '#4a7c8b';
+        
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, ${bgColor}, ${bgColor}dd);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid ${borderColor};
+            z-index: 10000;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            max-width: 400px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        `;
+        
+        messageDiv.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; color: #ffffff;">${type.charAt(0).toUpperCase() + type.slice(1)}</h3>
+            <p style="margin: 0 0 15px 0;">${message}</p>
+            <button onclick="this.parentElement.remove()" style="
+                background: ${bgColor};
+                color: white;
+                border: 1px solid ${borderColor};
+                padding: 8px 16px;
+                cursor: pointer;
+                border-radius: 4px;
+                font-family: 'Cinzel', serif;
+            ">OK</button>
+        `;
+        
+        document.body.appendChild(messageDiv);
+        
+        // Auto-remove after 3 seconds for info messages
+        if (type === 'info') {
+            setTimeout(() => {
+                if (messageDiv.parentElement) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+    }
 
-// Missing global functions that are called by the HTML
-function showInventory() {
-    window.gameEngine.showInventory();
+    // Show modal dialog
+    showModal(content, title = '', isLarge = false) {
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+
+        if (modalTitle) modalTitle.textContent = title;
+        if (modalContent) modalContent.innerHTML = content;
+        
+        if (modalOverlay && modal) {
+            modalOverlay.classList.add('active');
+            modal.classList.add('active');
+            this.activeModal = modal;
+        }
+    }
+
+    // Close modal dialog
+    closeModal() {
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modal = document.getElementById('modal');
+        
+        if (modalOverlay && modal) {
+            modalOverlay.classList.remove('active');
+            modal.classList.remove('active');
+            this.activeModal = null;
+        }
+    }
+
+    // Show journal/quest log
+    showJournal() {
+        if (!this.journal) {
+            this.showMessage('Journal not available!');
+            return;
+        }
+
+        let journalContent = '<div class="journal-content">';
+        
+        // Active Quests
+        journalContent += '<h3>Active Quests</h3>';
+        if (this.journal.quests && this.journal.quests.length > 0) {
+            journalContent += '<ul>';
+            this.journal.quests.forEach(quest => {
+                journalContent += `<li><strong>${quest.name}</strong>: ${quest.description}</li>`;
+            });
+            journalContent += '</ul>';
+        } else {
+            journalContent += '<p>No active quests.</p>';
+        }
+
+        // Rumors
+        journalContent += '<h3>Rumors</h3>';
+        if (this.journal.rumors && this.journal.rumors.length > 0) {
+            journalContent += '<ul>';
+            this.journal.rumors.forEach(rumor => {
+                journalContent += `<li>${rumor.text}</li>`;
+            });
+            journalContent += '</ul>';
+        } else {
+            journalContent += '<p>No rumors heard.</p>';
+        }
+
+        journalContent += '</div>';
+        
+        this.showModal(journalContent, 'Journal');
+    }
+
+    // Show error message
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #8b0000, #a00000);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ff0000;
+            z-index: 10000;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            max-width: 400px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        `;
+        errorDiv.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; color: #ffcccc;">Error</h3>
+            <p style="margin: 0 0 15px 0;">${message}</p>
+            <button onclick="this.parentElement.remove()" style="
+                background: #660000;
+                color: white;
+                border: 1px solid #ff0000;
+                padding: 8px 16px;
+                cursor: pointer;
+                border-radius: 4px;
+                font-family: 'Cinzel', serif;
+            ">OK</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
 }
 
 // Create global game engine instance
@@ -1190,215 +1676,20 @@ function closeModal() {
     window.gameEngine.closeModal();
 }
 
-// Additional global functions for HTML interactions
-function rollAttributes() {
-    if (window.gameEngine) {
-        window.gameEngine.rollAttributes();
-    }
-}
-
-function toggleMusic() {
-    if (window.audioManager) {
-        const musicBtn = document.getElementById('music-toggle');
-        const isPlaying = window.audioManager.toggleMusic();
-        if (musicBtn) {
-            musicBtn.textContent = isPlaying ? 'Music: ON' : 'Music: OFF';
-        }
-    }
-}
-
-function toggleSFX() {
-    if (window.audioManager) {
-        const sfxBtn = document.getElementById('sfx-toggle');
-        const isEnabled = window.audioManager.toggleSFX();
-        if (sfxBtn) {
-            sfxBtn.textContent = isEnabled ? 'SFX: ON' : 'SFX: OFF';
-        }
-    }
-}
-
-function setVolume(value) {
-    if (window.audioManager) {
-        window.audioManager.setMasterVolume(value / 100);
-    }
-}
-
-function showCharacterSheet() {
-    if (window.gameCharacter) {
-        const summary = window.gameCharacter.getSummary();
-        const sheetHTML = `
-            <div class="character-sheet">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div>
-                        <h3 style="margin: 0; color: #d4af37;">${summary.name}</h3>
-                        <p style="margin: 0; color: #ddd; font-style: italic;">Level ${summary.level} ${summary.race} ${summary.characterClass}</p>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                    <div>
-                        <h4 style="color: #d4af37; margin-bottom: 1rem;">Basic Information</h4>
-                        <p><strong>Race:</strong> ${summary.race}</p>
-                        <p><strong>Class:</strong> ${summary.characterClass}</p>
-                        <p><strong>Background:</strong> ${summary.background}</p>
-                        <p><strong>Level:</strong> ${summary.level}</p>
-                        <p><strong>Health:</strong> ${ summary.health}/${summary.maxHealth}</p>
-                        <p><strong>Gold:</strong> ${summary.gold}</p>
-                    </div>
-                    
-                    <div>
-                        <h4 style="color: #d4af37; margin-bottom: 1rem;">Attributes</h4>
-                        ${Object.entries(summary.attributes).map(([attr, value]) => {
-                            const modifier = Math.floor((value - 10) / 2);
-                            const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
-                            return `<p><strong>${attr.charAt(0).toUpperCase() + attr.slice(1)}:</strong> ${value} (${modStr})</p>`;
-                        }).join('')}
-                    </div>
-                </div>
-                
-                <div style="background: rgba(139, 69, 19, 0.3); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
-                    <h4 style="color: #d4af37; margin: 0 0 1rem 0;">Equipment & Inventory</h4>
-                    <p style="margin: 0.5rem 0;">Weapon: Starting equipment based on class</p>
-                    <p style="margin: 0.5rem 0;">Armor: Basic clothing/leather armor</p>
-                    <p style="margin: 0.5rem 0;">Inventory: ${window.gameCharacter.inventory.length > 0 ? window.gameCharacter.inventory.length + ' items' : 'Empty'}</p>
-                </div>
-                
-                <div style="background: rgba(0, 100, 0, 0.2); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #228b22;">
-                    <h4 style="color: #90ee90; margin: 0 0 1rem 0;">Character Progress</h4>
-                    <p style="margin: 0.5rem 0;">Experience: 0 / 100 XP to next level</p>
-                    <p style="margin: 0.5rem 0;">Quests Completed: 0</p>
-                    <p style="margin: 0.5rem 0;">Monsters Defeated: 0</p>
-                    <p style="margin: 0.5rem 0;">Exploration: 5% of the realm discovered</p>
-                </div>
-            </div>
-        `;
-        window.gameEngine.showModal('Character Sheet', sheetHTML, true);
-    }
-}
-
 function showInventory() {
-    if (window.gameCharacter) {
-        let inventoryHTML = '<div class="inventory-display">';
-        
-        if (window.gameCharacter.inventory.length === 0) {
-            inventoryHTML += `
-                <div style="text-align: center; padding: 2rem;">
-                    <h3 style="color: #d4af37;">Your Pack is Empty</h3>
-                    <p style="color: #ddd; margin: 1rem 0;">You haven't collected any items yet. Explore the world, complete quests, and visit merchants to fill your inventory!</p>
-                </div>
-            `;
-        } else {
-            inventoryHTML += `
-                <div style="margin-bottom: 2rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div>
-                            <h3 style="margin: 0; color: #d4af37;">Your Inventory</h3>
-                            <p style="margin: 0; color: #ddd; font-style: italic;">${window.gameCharacter.inventory.length} items</p>
-                        </div>
-                    </div>
-                    <div class="inventory-items" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-            `;
-            window.gameCharacter.inventory.forEach((item, index) => {
-                const itemData = window.dataManager ? window.dataManager.getItem(item) : null;
-                const itemName = itemData ? itemData.name : item;
-                const itemRarity = itemData ? itemData.rarity : 'common';
-                const rarityColor = this.getRarityColor(itemRarity);
-                
-                inventoryHTML += `
-                    <div class="inventory-item" style="background: rgba(139, 69, 19, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid #8b4513;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                            <strong style="color: #d4af37;">${itemName}</strong>
-                            ${item.quantity > 1 ? `<span style="background: #d4af37; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.25rem; cursor: pointer; border: 1px solid #d4af37;">x${item.quantity}</span>` : ''}
-                        </div>
-                        <p style="margin: 0; color: #ddd; font-size: 0.9rem;">${item.description || 'A mysterious item from your adventures.'}</p>
-                        ${item.value ? `<p style="margin: 0.5rem 0 0 0; color: #ffd700; font-size: 0.8rem;">Value: ${item.value} gold</p>` : ''}
-                    </div>
-                `;
-            });
-            inventoryHTML += '</div></div>';
-        }
-        
-        // Add equipment section
-        inventoryHTML += `
-            <div style="background: rgba(0, 100, 0, 0.2); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #228b22;">
-                <h4 style="color: #90ee90; margin: 0 0 1rem 0;">Equipment</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    <div>
-                        <p style="margin: 0.5rem 0;"><strong>Weapon:</strong> Starting Weapon</p>
-                        <p style="margin: 0.5rem 0;"><strong>Armor:</strong> Basic Clothing</p>
-                    </div>
-                    <div>
-                        <p style="margin: 0.5rem 0;"><strong>Shield:</strong> None</p>
-                        <p style="margin: 0.5rem 0;"><strong>Accessory:</strong> None</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        inventoryHTML += '</div>';
-        window.gameEngine.showModal('Inventory', inventoryHTML, true);
+    if (window.gameEngine && window.gameEngine.showModal) {
+        window.gameEngine.showModal('Inventory is empty', 'Inventory');
+    }
+}
+
+function showJournal() {
+    if (window.gameEngine && window.gameEngine.showJournal) {
+        window.gameEngine.showJournal();
     }
 }
 
 function saveGame() {
-    window.gameEngine.saveGame();
-}
-
-// Roll dice utility
-function rollDice(sides) {
-    return Math.floor(Math.random() * sides) + 1;
-}
-
-// Roll damage from dice notation
-function rollDamage(damageString) {
-    if (!damageString) return 1;
-    
-    const match = damageString.match(/(\d*)d(\d+)([\+\-]\d+)?/);
-    if (!match) return 1;
-    
-    const numDice = parseInt(match[1]) || 1;
-    const dieSize = parseInt(match[2]);
-    const modifier = parseInt(match[3]) || 0;
-    
-    let total = 0;
-    for (let i = 0; i < numDice; i++) {
-        total += rollDice(dieSize);
+    if (window.gameEngine && window.gameEngine.saveGame) {
+        window.gameEngine.saveGame();
     }
-    
-    return total + modifier;
-}
-
-// Show error message
-function showError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(45deg, #8b0000, #a00000);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        border: 2px solid #ff0000;
-        z-index: 10000;
-        text-align: center;
-        font-family: 'Cinzel', serif;
-        max-width: 400px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    `;
-    errorDiv.innerHTML = `
-        <h3 style="margin: 0 0 10px 0; color: #ffcccc;">Error</h3>
-        <p style="margin: 0 0 15px 0;">${message}</p>
-        <button onclick="this.parentElement.remove()" style=""
-            background: #660000;
-            color: white;
-            border: 1px solid #ff0000;
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-family: 'Cinzel', serif;
-        ">OK</button>
-    `;
-    document.body.appendChild(errorDiv);
 }

@@ -99,5 +99,46 @@
                 "Quest data now properly references item IDs for rewards"
             ]
         }
+    },
+    "a0.14.2": {
+        "version": "a0.14.2",
+        "releaseDate": "2024-7-15",
+        "title": "Dynamic Preset Character System",
+        "changes": {
+            "features": [
+                "Implemented dynamic preset character loading from character_presets.json",
+                "Added 11 unique preset characters including fantasy favorites like Vax'ildan, Grog Strongjaw, and Geralt of Rivia (will change later for copyright reasons, this is for testing and my own amusement)",
+                "Enhanced preset character interface with dynamic display generation",
+                "Added preset character validation and error handling for JSON loading failures",
+                "Implemented retry mechanism for failed preset data loading"
+            ],
+            "improvements": [
+                "Replaced hardcoded preset data with flexible JSON-based system",
+                "Enhanced developer tools preset interface with better character information display",
+                "Added character level-based color coding for preset display (yellow for high-level characters)",
+                "Improved preset character selection with index-based loading system",
+                "Enhanced error messages and user feedback for preset loading operations"
+            ],
+            "technical": [
+                "Refactored DeveloperTools class to use async JSON loading for presets",
+                "Added loadPresetData() method with proper error handling and fallbacks",
+                "Implemented getClassIcon() helper method for better visual presentation",
+                "Changed from string-based preset keys to array index-based system for better scalability",
+                "Added comprehensive character data validation for preset loading"
+            ],
+            "data": [
+                "Created character_presets.json with 11 diverse character presets",
+                "Added fantasy character archetypes: warrior, rogue, wizard, cleric, ranger, barbarian",
+                "Included special characters: high-level test character, wealthy merchant, famous characters",
+                "Added proper attribute distributions and equipment loadouts for each preset",
+                "Standardized character data structure across all presets"
+            ],
+            "fixes": [
+                "Fixed preset character loading to work with current game architecture",
+                "Resolved hardcoded data dependencies in developer tools",
+                "Improved preset character confirmation dialogs with proper index handling",
+                "Fixed character data persistence when loading presets during gameplay"
+            ]
+        }
     }
 }

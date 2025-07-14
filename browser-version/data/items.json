@@ -1,147 +1,468 @@
 {
-    "healing_potion": {
-        "name": "Healing Potion",
-        "type": "consumable",
-        "price": 50,
-        "effect": "heal",
-        "value": 10,
-        "rarity": "common"
+    "weapons": {
+        "short_sword": {
+            "name": "Short Sword",
+            "type": "weapon",
+            "price": 100,
+            "damage": "1d6",
+            "rarity": "common"
+        },
+        "wooden_bow": {
+            "name": "Wooden Bow",
+            "type": "weapon",
+            "price": 120,
+            "damage": "1d8",
+            "rarity": "common"
+        },
+        "iron_sword": {
+            "name": "Iron Sword",
+            "type": "weapon",
+            "price": 200,
+            "damage": "1d8",
+            "rarity": "uncommon"
+        },
+        "staff": {
+            "name": "Staff",
+            "type": "weapon",
+            "price": 80,
+            "damage": "1d6",
+            "rarity": "common"
+        },
+        "mace": {
+            "name": "Mace",
+            "type": "weapon",
+            "price": 150,
+            "damage": "1d8",
+            "rarity": "common"
+        },
+        "longbow": {
+            "name": "Longbow",
+            "type": "weapon",
+            "price": 180,
+            "damage": "1d8",
+            "rarity": "common"
+        },
+        "greataxe": {
+            "name": "Greataxe",
+            "type": "weapon",
+            "price": 300,
+            "damage": "1d12",
+            "rarity": "uncommon"
+        },
+        "legendary_sword": {
+            "name": "Legendary Sword",
+            "type": "weapon",
+            "price": 10000,
+            "damage": "2d8+3",
+            "rarity": "legendary"
+        },
+        "ornate_dagger": {
+            "name": "Ornate Dagger",
+            "type": "weapon",
+            "price": 400,
+            "damage": "1d4+1",
+            "rarity": "uncommon"
+        },
+        "twin_daggers": {
+            "name": "Twin Daggers",
+            "type": "weapon",
+            "price": 600,
+            "damage": "2d4",
+            "rarity": "rare"
+        },
+        "bloodaxe": {
+            "name": "Bloodaxe",
+            "type": "weapon",
+            "price": 5000,
+            "damage": "2d12",
+            "rarity": "epic"
+        },
+        "silver_sword": {
+            "name": "Silver Sword",
+            "type": "weapon",
+            "price": 800,
+            "damage": "1d8+2",
+            "rarity": "rare"
+        },
+        "steel_sword": {
+            "name": "Steel Sword",
+            "type": "weapon",
+            "price": 250,
+            "damage": "1d8+1",
+            "rarity": "uncommon"
+        },
+        "daggers": {
+            "name": "Daggers",
+            "type": "weapon",
+            "price": 120,
+            "damage": "1d4",
+            "rarity": "common"
+        }
     },
-    "short_sword": {
-        "name": "Short Sword",
-        "type": "weapon",
-        "price": 100,
-        "damage": "1d6",
-        "rarity": "common"
+    "armor": {
+        "leather_armor": {
+            "name": "Leather Armor",
+            "type": "armor",
+            "price": 75,
+            "ac_bonus": 1,
+            "rarity": "common"
+        },
+        "shield": {
+            "name": "Shield",
+            "type": "armor",
+            "price": 50,
+            "ac_bonus": 2,
+            "rarity": "common"
+        },
+        "chainmail": {
+            "name": "Chainmail",
+            "type": "armor",
+            "price": 200,
+            "ac_bonus": 4,
+            "rarity": "uncommon"
+        },
+        "robes": {
+            "name": "Robes",
+            "type": "armor",
+            "price": 50,
+            "ac_bonus": 0,
+            "rarity": "common"
+        },
+        "scale_mail": {
+            "name": "Scale Mail",
+            "type": "armor",
+            "price": 300,
+            "ac_bonus": 5,
+            "rarity": "uncommon"
+        },
+        "studded_leather": {
+            "name": "Studded Leather",
+            "type": "armor",
+            "price": 120,
+            "ac_bonus": 2,
+            "rarity": "common"
+        },
+        "hide_armor": {
+            "name": "Hide Armor",
+            "type": "armor",
+            "price": 80,
+            "ac_bonus": 1,
+            "rarity": "common"
+        },
+        "plate_armor": {
+            "name": "Plate Armor",
+            "type": "armor",
+            "price": 2000,
+            "ac_bonus": 8,
+            "rarity": "epic"
+        },
+        "fine_clothes": {
+            "name": "Fine Clothes",
+            "type": "armor",
+            "price": 200,
+            "ac_bonus": 0,
+            "rarity": "uncommon"
+        },
+        "dark_leather_armor": {
+            "name": "Dark Leather Armor",
+            "type": "armor",
+            "price": 500,
+            "ac_bonus": 3,
+            "rarity": "rare"
+        },
+        "witcher_armor": {
+            "name": "Witcher Armor",
+            "type": "armor",
+            "price": 1500,
+            "ac_bonus": 6,
+            "rarity": "epic"
+        }
     },
-    "leather_armor": {
-        "name": "Leather Armor",
-        "type": "armor",
-        "price": 75,
-        "ac_bonus": 1,
-        "rarity": "common"
+    "consumables": {
+        "healing_potion": {
+            "name": "Healing Potion",
+            "type": "consumable",
+            "price": 50,
+            "effect": "heal",
+            "value": 10,
+            "rarity": "common"
+        },
+        "ale": {
+            "name": "Ale",
+            "type": "consumable",
+            "price": 3,
+            "effect": "heal",
+            "value": 2,
+            "rarity": "common"
+        },
+        "blackberry_wine": {
+            "name": "Blackberry Wine",
+            "type": "consumable",
+            "price": 5,
+            "effect": "heal",
+            "value": 3, 
+            "rarity": "common"
+        },
+        "dragons_breath_shot": {
+            "name": "Dragon's Breath Shot",
+            "type": "consumable",
+            "price": 8,
+            "effect": "damage",
+            "value": 5,
+            "rarity": "uncommon"
+        },
+        "bacon_and_eggs_breakfast": {
+            "name": "Bacon and Eggs Breakfast",
+            "type": "consumable",
+            "price": 12,
+            "effect": "heal",
+            "value": 8,
+            "rarity": "common"
+        },
+        "roast_mutton_and_potatoes": {
+            "name": "Roast Mutton and Potatoes",
+            "type": "consumable",
+            "price": 14,
+            "effect": "heal",
+            "value": 10,
+            "rarity": "common"
+        },
+        "cabbage_stew_with_roasted_carrots": {
+            "name": "Cabbage Stew with Roasted Carrots",
+            "type": "consumable",
+            "price": 10,
+            "effect": "heal",
+            "value": 6, 
+            "rarity": "common"
+        },
+        "freshly_squeezed_orange_juice": {
+            "name": "Freshly Squeezed Orange Juice",
+            "type": "consumable",
+            "price": 4,
+            "effect": "heal",
+            "value": 3, 
+            "rarity": "common"
+        },
+        "rations": {
+            "name": "Rations",
+            "type": "consumable",
+            "price": 6,
+            "effect": "heal",
+            "value": 4,
+            "rarity": "common"
+        },
+        "fine_wine": {
+            "name": "Fine Wine",
+            "type": "consumable",
+            "price": 25,
+            "effect": "heal",
+            "value": 5,
+            "rarity": "uncommon"
+        },
+        "potion_of_swallow": {
+            "name": "Potion of Swallow",
+            "type": "consumable",
+            "price": 100,
+            "effect": "heal",
+            "value": 25,
+            "rarity": "rare"
+        },
+        "potion_of_thunderbolt": {
+            "name": "Potion of Thunderbolt",
+            "type": "consumable",
+            "price": 120,
+            "effect": "damage",
+            "value": 15,
+            "rarity": "rare"
+        }
     },
-    "spellbook": {
-        "name": "Spellbook",
-        "type": "misc",
-        "price": 200,
-        "rarity": "uncommon"
+    "tools": {
+        "lockpick": {
+            "name": "Lockpick",
+            "type": "tool",
+            "price": 20,
+            "rarity": "common"
+        },
+        "wooden_arrow": {
+            "name": "Wooden Arrow",
+            "type": "tool",
+            "price": 2,
+            "rarity": "common"
+        },
+        "thieves_tools": {
+            "name": "Thieves' Tools",
+            "type": "tool",
+            "price": 150,
+            "rarity": "uncommon"
+        },
+        "lockpicks": {
+            "name": "Lockpicks",
+            "type": "tool", 
+            "price": 25,
+            "rarity": "common"
+        },
+        "component_pouch": {
+            "name": "Component Pouch",
+            "type": "tool",
+            "price": 80,
+            "rarity": "common"
+        },
+        "hunting_trap": {
+            "name": "Hunting Trap",
+            "type": "tool",
+            "price": 60,
+            "rarity": "common"
+        },
+        "survival_kit": {
+            "name": "Survival Kit",
+            "type": "tool",
+            "price": 100,
+            "rarity": "common"
+        }
     },
-    "lockpick": {
-        "name": "Lockpick",
-        "type": "tool",
-        "price": 20,
-        "rarity": "common"
+    "accessories": {
+        "cursed_amulet": {
+            "name": "Cursed Amulet",
+            "type": "accessory",
+            "price": 500,
+            "rarity": "epic",
+            "description": "An ancient amulet radiating dark energy. Handle with caution."
+        },
+        "ring_of_power": {
+            "name": "Ring of Power",
+            "type": "accessory",
+            "price": 50000,
+            "rarity": "legendary",
+            "description": "A legendary ring that grants immense power to its wearer."
+        },
+        "gold_ring": {
+            "name": "Gold Ring",
+            "type": "accessory",
+            "price": 300,
+            "rarity": "uncommon",
+            "description": "A beautifully crafted gold ring that shows wealth and status."
+        },
+        "cloak_of_shadows": {
+            "name": "Cloak of Shadows",
+            "type": "accessory",
+            "price": 2500,
+            "rarity": "epic",
+            "description": "A dark cloak that helps its wearer blend into shadows."
+        },
+        "titanstone_knuckles": {
+            "name": "Titanstone Knuckles",
+            "type": "accessory",
+            "price": 8000,
+            "rarity": "epic",
+            "description": "Enchanted knuckles that increase the power of unarmed strikes."
+        },
+        "wolf_medallion": {
+            "name": "Wolf Medallion",
+            "type": "accessory",
+            "price": 1200,
+            "rarity": "rare",
+            "description": "A witcher's medallion that vibrates in the presence of magic."
+        },
+        "tribal_necklace": {
+            "name": "Tribal Necklace",
+            "type": "accessory",
+            "price": 80,
+            "rarity": "common",
+            "description": "A traditional necklace worn by tribal warriors."
+        },
+        "magic_ring": {
+            "name": "Magic Ring",
+            "type": "accessory",
+            "price": 1500,
+            "rarity": "rare",
+            "description": "A ring imbued with magical properties."
+        },
+        "belt_of_dwarvenkind": {
+            "name": "Belt of Dwarvenkind",
+            "type": "accessory",
+            "price": 5000,
+            "rarity": "epic",
+            "description": "A magical belt that grants the resilience of dwarves."
+        },
+        "holy_symbol": {
+            "name": "Holy Symbol",
+            "type": "accessory",
+            "price": 40,
+            "rarity": "common",
+            "description": "A sacred symbol used by clerics and paladins."
+        }
     },
-    "shield": {
-        "name": "Shield",
-        "type": "armor",
-        "price": 50,
-        "ac_bonus": 2,
-        "rarity": "common"
+    "miscellaneous": {
+        "spellbook": {
+            "name": "Spellbook",
+            "type": "misc",
+            "price": 200,
+            "rarity": "uncommon"
+        },
+        "ancient_tome": {
+            "name": "Ancient Tome",
+            "type": "misc",
+            "price": 800,
+            "rarity": "epic",
+            "description": "A book of forgotten knowledge and mysterious spells."
+        },
+        "treasure_map": {
+            "name": "Treasure Map",
+            "type": "misc",
+            "price": 100,
+            "rarity": "rare",
+            "description": "A weathered map marking the location of hidden treasure."
+        },
+        "prayer_book": {
+            "name": "Prayer Book",
+            "type": "misc",
+            "price": 30,
+            "rarity": "common",
+            "description": "A collection of sacred prayers and hymns."
+        },
+        "legendary_artifact": {
+            "name": "Legendary Artifact",
+            "type": "misc",
+            "price": 25000,
+            "rarity": "legendary",
+            "description": "An artifact of immense power from ancient times."
+        },
+        "dragon_scale": {
+            "name": "Dragon Scale",
+            "type": "misc",
+            "price": 500,
+            "rarity": "epic",
+            "description": "A scale from an ancient dragon, radiating magical energy."
+        },
+        "silk_clothes": {
+            "name": "Silk Clothes",
+            "type": "misc",
+            "price": 150,
+            "rarity": "uncommon",
+            "description": "Expensive clothing made from the finest silk."
+        },
+        "trade_goods": {
+            "name": "Trade Goods",
+            "type": "misc",
+            "price": 50,
+            "rarity": "common",
+            "description": "Various goods for trade and commerce."
+        },
+        "merchants_seal": {
+            "name": "Merchant's Seal",
+            "type": "misc",
+            "price": 200,
+            "rarity": "uncommon",
+            "description": "An official seal that proves membership in a merchant guild."
+        }
     },
-    "wooden_bow": {
-        "name": "Wooden Bow",
-        "type": "weapon",
-        "price": 120,
-        "damage": "1d8",
-        "rarity": "common"
-    },
-    "wooden_arrow": {
-        "name": "Wooden Arrow",
-        "type": "ammunition",
-        "price": 1,
-        "rarity": "common"
-    },
-    "ale": {
-        "name": "Ale",
-        "type": "consumable",
-        "price": 3,
-        "effect": "heal",
-        "value": 2,
-        "rarity": "common"
-    },
-    "blackberry_wine": {
-        "name": "Blackberry Wine",
-        "type": "consumable",
-        "price": 5,
-        "effect": "heal",
-        "value": 3, 
-        "rarity": "common"
-    },
-    "dragons_breath_shot": {
-        "name": "Dragon's Breath Shot",
-        "type": "consumable",
-        "price": 8,
-        "effect": "damage",
-        "value": 5,
-        "rarity": "uncommon"
-    },
-    "bacon_and_eggs_breakfast": {
-        "name": "Bacon and Eggs Breakfast",
-        "type": "consumable",
-        "price": 12,
-        "effect": "heal",
-        "value": 8,
-        "rarity": "common"
-    },
-    "roast_mutton_and_potatoes": {
-        "name": "Roast Mutton and Potatoes",
-        "type": "consumable",
-        "price": 14,
-        "effect": "heal",
-        "value": 10,
-        "rarity": "common"
-    },
-    "cabbage_stew_with_roasted_carrots": {
-        "name": "Cabbage Stew with Roasted Carrots",
-        "type": "consumable",
-        "price": 10,
-        "effect": "heal",
-        "value": 6, 
-        "rarity": "common"
-    },
-    "freshly_squeezed_orange_juice": {
-        "name": "Freshly Squeezed Orange Juice",
-        "type": "consumable",
-        "price": 4,
-        "effect": "heal",
-        "value": 3, 
-        "rarity": "common"
-    },
-    "iron_sword": {
-        "name": "Iron Sword",
-        "type": "weapon",
-        "price": 200,
-        "damage": "1d8",
-        "rarity": "uncommon"
-    },
-    "cursed_amulet": {
-        "name": "Cursed Amulet",
-        "type": "accessory",
-        "price": 500,
-        "rarity": "epic",
-        "description": "An ancient amulet radiating dark energy. Handle with caution."
-    },
-    "ancient_tome": {
-        "name": "Ancient Tome",
-        "type": "misc",
-        "price": 800,
-        "rarity": "epic",
-        "description": "A book of forgotten knowledge and mysterious spells."
-    },
-    "treasure_map": {
-        "name": "Treasure Map",
-        "type": "misc",
-        "price": 100,
-        "rarity": "rare",
-        "description": "A weathered map marking the location of hidden treasure."
-    },
-    "gold_coins": {
-        "name": "Gold Coins",
-        "type": "currency",
-        "price": 1,
-        "rarity": "common",
-        "description": "Shiny gold coins from ancient times."
+    "currency": {
+        "gold_coins": {
+            "name": "Gold Coins",
+            "type": "currency",
+            "price": 1,
+            "rarity": "common",
+            "description": "Shiny gold coins from ancient times."
+        }
     }
 }
