@@ -1,0 +1,62 @@
+{
+    "Fighter": {
+        "name": "Fighter",
+        "description": "Fighters are masters of martial combat, skilled with a variety of weapons and armor. Questing knights, conquering overlords, royal champions, elite foot soldiers, hardened mercenaries, and bandit kings—as fighters, they all share an unparalleled mastery with weapons and armor, and a thorough knowledge of the skills of combat. They are well acquainted with death, both meting it out and staring it defiantly in the face.",
+        "abilities": {
+            "Resolve": {
+                "description": "Use an action to instantly heal."
+            },
+            "Power Strike": {
+                "description": "A devastating attack that deals extra damage."
+            }
+        }
+    },
+    "Wizard": {
+        "name": "Wizard",
+        "description": "Wizards are supreme magic-users, defined and united as a class by the spells they cast. Drawing on the subtle weave of magic that permeates the cosmos, wizards cast spells of explosive fire, arcing lightning, subtle deception, and brute-force mind control. Their magic conjures monsters from other planes of existence, glimpses the future, or turns slain foes into zombies. Their mightiest spells change one substance into another, call meteors down from the sky, or open portals to other worlds.",
+        "abilities": {
+            "Magic Missile": {
+                "description": "A spell that never misses its target."
+            },
+            "Fireball": {
+                "description": "Unleash a ball of fire that explodes on impact."
+            }
+        }
+    },
+    "Cleric": {
+        "name": "Cleric",
+        "description": "Clerics are intermediaries between the mortal world and the distant planes of the gods. As varied as the gods they serve, clerics strive to embody the handiwork of their deities. No ordinary priest, a cleric is imbued with divine magic. Whether rallying allies to battle with their powerful magic and healing abilities, or striking down enemies with divine wrath, clerics serve as the front line against the forces of darkness.",
+        "abilities": {
+            "Heal": {
+                "description": "Channel divine energy to restore health."
+            },
+            "Turn Undead": {
+                "description": "Use divine power to repel undead creatures."
+            }
+        }
+    },
+    "Rogue": {
+        "name": "Rogue",
+        "description": "Rogues rely on skill, stealth, and their foes' vulnerabilities to get the upper hand in any situation. They have a knack for finding the solution to just about any problem, demonstrating a resourcefulness and versatility that is the cornerstone of any successful adventuring party. Whether through careful planning, quick thinking, or sheer luck, rogues always seem to find a way out of trouble.",
+        "abilities": {
+            "Sneak Attack": {
+                "description": "Deal extra damage when striking from the shadows."
+            },
+            "Stealth": {
+                "description": "Move unseen and unheard through enemy territory."
+            }
+        }
+    },
+    "Ranger": {
+        "name": "Ranger", 
+        "description": "Warriors of the wilderness, rangers specialize in hunting the monsters that threaten the edges of civilization—humanoid raiders, rampaging beasts and monstrosities, terrible giants, and deadly dragons. They learn to track their quarry as a predator does, moving stealthily through the wilds and hiding themselves in brush and rubble. Rangers focus their combat training on techniques that are particularly useful against their specific favored foes.",
+        "abilities": {
+            "Multi-Shot": {
+                "description": "Fire multiple arrows at once with deadly accuracy."
+            },
+            "Track": {
+                "description": "Follow the trail of creatures through any terrain."
+            }
+        }
+    }
+}

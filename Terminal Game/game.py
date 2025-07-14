@@ -18,7 +18,7 @@ try:
 except ImportError:
     print("prettytable not installed. Install with: pip install prettytable")
     # Create fallback classes
-    class PrettyTable:
+    class FallbackPrettyTable:
         def __init__(self):
             self.field_names = []
             self.align = "l"
@@ -44,10 +44,12 @@ try:
 except ImportError:
     print("keyboard not installed. Install with: pip install keyboard")
     # Create fallback keyboard module
-    class keyboard:
+    class FallbackKeyboard:
         @staticmethod
         def is_pressed(key):
             return False
+
+    keyboard = FallbackKeyboard
 
 # Initialize colorama
 init(autoreset=True)
@@ -262,7 +264,7 @@ class Character:
         }
         self.class_hp = class_hp.get(self.char_class, 8)
         self.proficiencies.extend(class_proficiencies.get(self.char_class, []))
-        self.abilities.extend(game_data.classes)
+        # Note: Abilities should be set elsewhere when game_data is available
 
     def set_background_attributes(self):
         background_proficiencies = {
@@ -426,7 +428,10 @@ class Character:
         if hasattr(table, 'min_table_width'):
             table.min_table_width = 50
         if hasattr(table, 'set_style'):
-            table.set_style(DOUBLE_BORDER)
+            if DOUBLE_BORDER:
+                table.set_style(DOUBLE_BORDER)
+            else:
+                print(Fore.RED + "DOUBLE_BORDER style is not available.")
         print(table)
 
         # Get user input
@@ -553,9 +558,13 @@ class Tools:
         if hasattr(table, 'align'):
             table.align = align
         if vrules and hasattr(table, 'vrules'):
-            table.vrules = getattr(PrettyTable, vrules, None)
+            vrules_value = getattr(PrettyTable, vrules, None)
+            if vrules_value is not None:
+                table.vrules = vrules_value
         if hrules and hasattr(table, 'hrules'):
-            table.hrules = getattr(PrettyTable, hrules, None)
+            hrules_value = getattr(PrettyTable, hrules, None)
+            if hrules_value is not None:
+                table.hrules = hrules_value
         if sortby and hasattr(table, 'sortby'):
             table.sortby = sortby
             if hasattr(table, 'reversesort'):
@@ -769,7 +778,7 @@ class Shop:
                 Defaults to "shop_greeting".
         """
         # Play Shop Greeting
-        sfx_path = os.path.join("sfx", "voiceover", shop_data.shop_data['merchant_id'], f"{file_name}.wav")
+        sfx_path = os.path.join("sfx", "voiceover", shop_data['merchant_id'], f"{file_name}.wav")
         if os.path.exists(sfx_path):
             Audio.play_sfx(sfx_path)
 
@@ -781,7 +790,7 @@ class Shop:
         self.merchant_goodbye = self.shop_data['merchant_goodbye']
         self.shop_type = self.shop_data['type']
         self.play_shop_music()
-        self.play_shop_sfx("shop_greeting") # We can add an argument later to randomize the greeting!
+        self.play_shop_sfx(self.shop_data, "shop_greeting") # We can add an argument later to randomize the greeting!
 
         # Shop Loop
         while True:
@@ -824,7 +833,7 @@ class Shop:
                         input("Press Enter to continue...")
                 elif choice == len(self.items) + 1:
                     print(f"\n{Fore.BLUE}{self.merchant_name}: {Fore.WHITE}{self.merchant_goodbye}{Fore.RESET}")
-                    self.play_shop_sfx("shop_goodbye")
+                    self.play_shop_sfx(self.shop_data, "shop_goodbye")
                     Tools.is_music_playing = False
                     time.sleep(1)
                     Tools.is_music_playing = True
@@ -869,7 +878,10 @@ class Shop:
             table.align["Price"] = "l"  # Right align price
             table.align["Quantity"] = "c"  # Right align quantity
         if hasattr(table, 'set_style'):
-            table.set_style(SINGLE_BORDER)
+            if SINGLE_BORDER:
+                table.set_style(SINGLE_BORDER)
+            else:
+                print(Fore.RED + "SINGLE_BORDER style is not available.")
 
         # Populate the table
         for idx, item in enumerate(self.items):
@@ -1035,7 +1047,13 @@ class Game:
                             npc_table.add_row([npc_names[i], npc_types[i], npc_roles[i], npc_locations[i]])
 
                     if hasattr(npc_table, 'set_style'):
-                        npc_table.set_style(DOUBLE_BORDER)
+                        if DOUBLE_BORDER:
+                            if DOUBLE_BORDER is not None:
+                                npc_table.set_style(DOUBLE_BORDER)
+                            else:
+                                print(Fore.RED + "DOUBLE_BORDER style is not available.")
+                        else:
+                            print(Fore.RED + "DOUBLE_BORDER style is not available.")
                     if hasattr(npc_table, 'align'):
                         npc_table.align = "l"
                     if hasattr(npc_table, 'sortby'):
@@ -1178,15 +1196,23 @@ class Game:
     def shop_summary(shop_name, player, game_data):
         # Summary Shop (To give the player the option to enter or not)
         clear_console()
+        
+        # Check if shop exists
+        shop_data = game_data.shops.get(shop_name)
+        if not shop_data:
+            print(f"{Fore.RED}Error: Shop '{shop_name}' not found in shop data!{Fore.RESET}")
+            input("Press Enter to continue...")
+            return
+            
         print(print_bar("large", Fore.YELLOW))
-        print(f"{Fore.LIGHTBLUE_EX}{shop_name} {Fore.RED}({game_data.shops.get(shop_name).get('type')})")
-        print(f"{Fore.WHITE}\nMerchant: {Fore.RED}{game_data.shops.get(shop_name).get('merchant')}")
-        print(f"{Fore.WHITE}\nDescription:\n{Fore.RED}{game_data.shops.get(shop_name).get('description')}{Fore.RESET}")
+        print(f"{Fore.LIGHTBLUE_EX}{shop_name} {Fore.RED}({shop_data.get('type', 'Unknown')})")
+        print(f"{Fore.WHITE}\nMerchant: {Fore.RED}{shop_data.get('merchant_name', 'Unknown')}")
+        print(f"{Fore.WHITE}\nDescription:\n{Fore.RED}{shop_data.get('description', 'No description available.')}{Fore.RESET}")
         print(print_bar("large", Fore.YELLOW))
         choice = select_option(["Yes", "No"], f"Would you like to enter {Fore.LIGHTBLUE_EX}{shop_name}{Fore.YELLOW}?{Fore.RESET}", Fore.YELLOW, False)
         # Open shop
         if choice[0] == "Yes":
-            shop = Shop(game_data, shop_name, game_data.shops[shop_name])        
+            shop = Shop(game_data, shop_name, shop_data)        
             # Add the merchant to the options!!
             shop.open_shop(player)
         if choice[0] == "No":

@@ -1,0 +1,22 @@
+{
+    "Sage": {
+        "name": "Sage",
+        "description": "You spent years learning the lore of the multiverse. You scoured manuscripts, studied scrolls, and listened to the greatest experts on the subjects that interest you. Your efforts have made you a master of the esoteric and obscure."
+    },
+    "Noble": {
+        "name": "Noble",
+        "description": "You understand wealth, power, and privilege. You carry a noble title, and your family owns land, collects taxes, and wields significant political influence. You might be a pampered aristocrat unfamiliar with work or discomfort."
+    },
+    "Criminal": {
+        "name": "Criminal",
+        "description": "You are an experienced criminal with a history of breaking the law. You have spent a lot of time among other criminals and still have contacts within the criminal underworld. You're far closer than most people to the world of murder, theft, and violence."
+    },
+    "Acolyte": {
+        "name": "Acolyte",
+        "description": "You have spent your life in the service of a temple to a specific god or pantheon of gods. You act as an intermediary between the realm of the holy and the mortal world, performing sacred rites and offering sacrifices."
+    },
+    "Traumatized": {
+        "name": "Traumatized",
+        "description": "You have experienced something terrible that has left deep psychological scars. Perhaps you witnessed a great tragedy, survived a devastating war, or endured a personal loss that changed you forever. This trauma shapes how you see the world."
+    }
+}

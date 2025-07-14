@@ -1,0 +1,68 @@
+{
+    "forest_lights": {
+        "id": "forest_lights",
+        "title": "Strange Lights in the Forest",
+        "content": "I heard from the tavern keeper that strange lights were seen over the Dark Forest last night. The locals seem uneasy about it. Some say it could be magic, others think it might be bandits with torches. I should investigate this when I get the chance.",
+        "location": "Village of Millhaven",
+        "heard": false,
+        "tags": ["mystery", "forest", "magic"],
+        "source": "Tavern Keeper",
+        "urgency": "medium",
+        "discovered": false
+    },
+    "missing_caravan": {
+        "id": "missing_caravan",
+        "title": "Overdue Merchant Caravan",
+        "content": "A merchant caravan from the capital is three days overdue. This is troubling news - the roads have been mostly safe lately. I wonder if this is connected to the strange lights in the forest. The merchants would have taken the forest road.",
+        "location": "Village of Millhaven", 
+        "heard": false,
+        "tags": ["trade", "missing", "urgent"],
+        "source": "Village Guards",
+        "urgency": "high",
+        "discovered": false
+    },
+    "missing_livestock": {
+        "id": "missing_livestock",
+        "title": "Livestock Disappearances",
+        "content": "Local farmers have been reporting missing livestock near the old ruins. They say the animals vanish without a trace during the night. This could be the work of wild beasts, or perhaps something more sinister lurks in those ancient stones.",
+        "location": "Village of Millhaven",
+        "heard": false,
+        "tags": ["farming", "ruins", "mystery"],
+        "source": "Local Farmers",
+        "urgency": "medium",
+        "discovered": false
+    },
+    "haunted_mill": {
+        "id": "haunted_mill",
+        "title": "The Haunted Windmill",
+        "content": "Old Martha swears she's seen ghostly figures dancing around the abandoned windmill on moonless nights. Most folk think she's just had too much ale, but I've noticed even the bravest men avoid that place after dark.",
+        "location": "Village of Millhaven",
+        "heard": false,
+        "tags": ["supernatural", "haunted", "folklore"],
+        "source": "Old Martha",
+        "urgency": "low",
+        "discovered": false
+    },
+    "dragon_sighting": {
+        "id": "dragon_sighting",
+        "title": "Dragon in the Mountains",
+        "content": "A traveling merchant claims to have seen a massive winged shadow circling the peaks of the Misty Mountains. Could it be a dragon? The last confirmed dragon sighting was over a century ago. If true, this could change everything.",
+        "location": "Misty Mountains",
+        "heard": false,
+        "tags": ["dragon", "mountains", "legendary"],
+        "source": "Traveling Merchant",
+        "urgency": "high",
+        "discovered": false
+    },
+    "treasure_map": {
+        "id": "treasure_map",
+        "title": "Ancient Treasure Map",
+        "content": "A drunk sailor in the tavern let slip that he has half of an ancient treasure map. He says it leads to a pirate's hoard buried somewhere along the coast. The other half was supposedly stolen by his former partner.",
+        "location": "The Rusty Mug Tavern",
+        "heard": false,
+        "tags": ["treasure", "pirates", "adventure"],
+        "source": "Drunk Sailor",
+        "urgency": "low",
+        "discovered": false
+    }
+}

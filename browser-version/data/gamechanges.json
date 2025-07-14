@@ -1,0 +1,103 @@
+{
+    "a0.14.0": {
+        "version": "a0.14.0",
+        "releaseDate": "2024-7-12",
+        "title": "Journal System & UI Improvements",
+        "changes": {
+            "features": [
+                "Added comprehensive journal system with rumors and quests tabs",
+                "Implemented clickable recent events that link to specific rumors",
+                "Added dynamic quest tracking with clickable quest links", 
+                "Created data-driven rumor and quest system from JSON files",
+                "Added responsive grid layout for action buttons and travel destinations"
+            ],
+            "improvements": [
+                "Redesigned village action buttons to display in responsive grid (4-5 per row)",
+                "Enhanced travel destinations layout with better screen size adaptation",
+                "Improved modal system with wider layouts for character sheets and inventory",
+                "Updated font system to use Asul for body text and Cinzel for headers"
+            ],
+            "tweaks": [
+                "Removed emojis from interface for cleaner visual design",
+                "Enhanced link hover effects with golden glow animation",
+                "Improved journal entry highlighting when accessed via links",
+                "Optimized mobile responsiveness for action grids"
+            ],
+            "technical": [
+                "Implemented async data loading for rumors and quests from JSON files",
+                "Added fallback data system in case JSON files fail to load",
+                "Enhanced error handling for journal data loading",
+                "Improved code organization with separate data management functions"
+            ]
+        }
+    },
+    "a0.13.1": {
+        "version": "a0.13.1",
+        "releaseDate": "2024-7-11",
+        "title": "Core Combat & Character Systems",
+        "changes": {
+            "features": [
+                "Implemented turn-based combat system with attack, ability, item, and flee options",
+                "Added character creation with race, class, and background selection",
+                "Created inventory and equipment management system",
+                "Implemented basic exploration and random encounter system"
+            ],
+            "improvements": [
+                "Enhanced character sheet display with detailed attribute information",
+                "Improved location-based music and sound effects",
+                "Added visual health bars and combat status tracking",
+                "Enhanced modal dialogs for better user interaction"
+            ],
+            "tweaks": [
+                "Balanced combat mechanics and damage calculations",
+                "Improved attribute rolling system for character creation",
+                "Enhanced shop interface with purchase confirmation",
+                "Optimized save/load game functionality"
+            ],
+            "bugfixes": [
+                "Fixed character attribute calculation errors",
+                "Resolved modal overlay display issues",
+                "Corrected inventory item stacking problems",
+                "Fixed audio playback initialization timing"
+            ]
+        }
+    },
+    "a0.14.1": {
+        "version": "a0.14.1", 
+        "releaseDate": "2024-7-14",
+        "title": "Enhanced Quest System & Item Integration",
+        "changes": {
+            "features": [
+                "Replaced 'Ready' quests with 'Available' quests for better clarity",
+                "Added quest tagging system with clickable tag filters",
+                "Implemented search functionality for quests",
+                "Enhanced rumors system with tags and structured content",
+                "Added item rarity color coding (common=white, uncommon=green, rare=blue, epic=purple, legendary=orange)",
+                "Integrated items.json data with quest rewards display",
+                "Improved inventory system to show actual player items with proper display",
+                "Fixed quest-manager integration with save/load system"
+            ],
+            "improvements": [
+                "Quest items now display with proper names from items.json instead of IDs",
+                "Item tooltips and displays respect rarity coloring",
+                "Enhanced inventory UI with proper item categorization",
+                "Fixed data manager to properly handle flat item structure",
+                "Quest filtering now supports multiple categories (Active, Available, Completed)",
+                "Added developer tools commands for quest testing and management"
+            ],
+            "fixes": [
+                "Fixed corrupted game.js file structure and syntax errors",
+                "Resolved duplicate function definitions causing runtime errors", 
+                "Fixed quest manager initialization and data persistence",
+                "Corrected item lookup to work with current JSON structure",
+                "Stabilized save/load functionality with quest data"
+            ],
+            "data": [
+                "Added missing items: cursed_amulet, ancient_tome, treasure_map, gold_coins",
+                "Enhanced items.json with proper rarity and description fields",
+                "Updated rumors.json with tags and enhanced content structure",
+                "Quest data now properly references item IDs for rewards"
+            ]
+        }
+    }
+}

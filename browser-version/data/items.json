@@ -1,0 +1,147 @@
+{
+    "healing_potion": {
+        "name": "Healing Potion",
+        "type": "consumable",
+        "price": 50,
+        "effect": "heal",
+        "value": 10,
+        "rarity": "common"
+    },
+    "short_sword": {
+        "name": "Short Sword",
+        "type": "weapon",
+        "price": 100,
+        "damage": "1d6",
+        "rarity": "common"
+    },
+    "leather_armor": {
+        "name": "Leather Armor",
+        "type": "armor",
+        "price": 75,
+        "ac_bonus": 1,
+        "rarity": "common"
+    },
+    "spellbook": {
+        "name": "Spellbook",
+        "type": "misc",
+        "price": 200,
+        "rarity": "uncommon"
+    },
+    "lockpick": {
+        "name": "Lockpick",
+        "type": "tool",
+        "price": 20,
+        "rarity": "common"
+    },
+    "shield": {
+        "name": "Shield",
+        "type": "armor",
+        "price": 50,
+        "ac_bonus": 2,
+        "rarity": "common"
+    },
+    "wooden_bow": {
+        "name": "Wooden Bow",
+        "type": "weapon",
+        "price": 120,
+        "damage": "1d8",
+        "rarity": "common"
+    },
+    "wooden_arrow": {
+        "name": "Wooden Arrow",
+        "type": "ammunition",
+        "price": 1,
+        "rarity": "common"
+    },
+    "ale": {
+        "name": "Ale",
+        "type": "consumable",
+        "price": 3,
+        "effect": "heal",
+        "value": 2,
+        "rarity": "common"
+    },
+    "blackberry_wine": {
+        "name": "Blackberry Wine",
+        "type": "consumable",
+        "price": 5,
+        "effect": "heal",
+        "value": 3, 
+        "rarity": "common"
+    },
+    "dragons_breath_shot": {
+        "name": "Dragon's Breath Shot",
+        "type": "consumable",
+        "price": 8,
+        "effect": "damage",
+        "value": 5,
+        "rarity": "uncommon"
+    },
+    "bacon_and_eggs_breakfast": {
+        "name": "Bacon and Eggs Breakfast",
+        "type": "consumable",
+        "price": 12,
+        "effect": "heal",
+        "value": 8,
+        "rarity": "common"
+    },
+    "roast_mutton_and_potatoes": {
+        "name": "Roast Mutton and Potatoes",
+        "type": "consumable",
+        "price": 14,
+        "effect": "heal",
+        "value": 10,
+        "rarity": "common"
+    },
+    "cabbage_stew_with_roasted_carrots": {
+        "name": "Cabbage Stew with Roasted Carrots",
+        "type": "consumable",
+        "price": 10,
+        "effect": "heal",
+        "value": 6, 
+        "rarity": "common"
+    },
+    "freshly_squeezed_orange_juice": {
+        "name": "Freshly Squeezed Orange Juice",
+        "type": "consumable",
+        "price": 4,
+        "effect": "heal",
+        "value": 3, 
+        "rarity": "common"
+    },
+    "iron_sword": {
+        "name": "Iron Sword",
+        "type": "weapon",
+        "price": 200,
+        "damage": "1d8",
+        "rarity": "uncommon"
+    },
+    "cursed_amulet": {
+        "name": "Cursed Amulet",
+        "type": "accessory",
+        "price": 500,
+        "rarity": "epic",
+        "description": "An ancient amulet radiating dark energy. Handle with caution."
+    },
+    "ancient_tome": {
+        "name": "Ancient Tome",
+        "type": "misc",
+        "price": 800,
+        "rarity": "epic",
+        "description": "A book of forgotten knowledge and mysterious spells."
+    },
+    "treasure_map": {
+        "name": "Treasure Map",
+        "type": "misc",
+        "price": 100,
+        "rarity": "rare",
+        "description": "A weathered map marking the location of hidden treasure."
+    },
+    "gold_coins": {
+        "name": "Gold Coins",
+        "type": "currency",
+        "price": 1,
+        "rarity": "common",
+        "description": "Shiny gold coins from ancient times."
+    }
+}

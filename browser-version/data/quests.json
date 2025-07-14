@@ -1,0 +1,218 @@
+{
+  "goblin_threat": {
+    "questId": "goblin_threat",
+    "name": "Goblin Threat",
+    "description": "Goblins have been raiding the village, stealing crops and livestock. Led by the fearsome chieftain Gorg, the villagers need your help to defeat him and protect their livelihood.",
+    "questGiver": {
+      "name": "Elder Kita",
+      "location": "Brightwood Village"
+    },
+    "questType": "main",
+    "difficulty": "easy",
+    "level": {
+      "minimum": 1,
+      "recommended": 3
+    },
+    "status": "inactive",
+    "progress": {
+      "currentObjective": 0,
+      "objectivesCompleted": 0
+    },
+    "objectives": [
+      {
+        "id": 1,
+        "description": "Locate the goblin camp in the nearby forest",
+        "type": "exploration",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 5,
+          "gold": 0
+        }
+      },
+      {
+        "id": 2,
+        "description": "Infiltrate the goblin camp",
+        "type": "stealth",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 10,
+          "gold": 0
+        }
+      },
+      {
+        "id": 3,
+        "description": "Defeat the goblin guards",
+        "type": "combat",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 15,
+          "gold": 0
+        }
+      },
+      {
+        "id": 4,
+        "description": "Confront the goblin chieftain Gorg",
+        "type": "combat",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 20,
+          "gold": 50
+        }
+      },
+      {
+        "id": 5,
+        "description": "Return to Elder Kita with news of your victory",
+        "type": "return",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 10,
+          "gold": 50
+        }
+      }
+    ],
+    "rewards": {
+      "completion": {
+        "experience": 100,
+        "gold": 200,
+        "items": ["iron_sword"],
+        "reputation": {"village": 10}
+      }
+    },
+    "tags": ["combat", "exploration", "mainquest"],
+    "timeLimit": null,
+    "prerequisites": [],
+    "unlocks": ["advanced_goblin_quest"]
+  },
+  "lost_treasure": {
+    "questId": "lost_treasure",
+    "name": "Lost Treasure",
+    "description": "A rumor has spread through the tavern about a lost treasure hidden deep within the Whispering Woods. The villagers are wary of venturing into the woods, but they've heard tales of a map that can lead you to the treasure.",
+    "questGiver": {
+      "name": "Barkeep Ben",
+      "location": "The Rusty Mug Tavern"
+    },
+    "questType": "side",
+    "difficulty": "medium",
+    "level": {
+      "minimum": 3,
+      "recommended": 5
+    },
+    "status": "inactive",
+    "progress": {
+      "currentObjective": 0,
+      "objectivesCompleted": 0
+    },
+    "objectives": [
+      {
+        "id": 1,
+        "description": "Find the lost treasure in the Whispering Woods",
+        "type": "exploration",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 100,
+          "gold": 200
+        }
+      }
+    ],
+    "rewards": {
+      "completion": {
+        "experience": 200,
+        "gold": 400,
+        "items": ["treasure_map", "gold_coins"],
+        "reputation": {"tavern": 5}
+      }
+    },
+    "tags": ["exploration", "treasure"],
+    "timeLimit": null,
+    "prerequisites": [],
+    "unlocks": []
+  },
+  "missing_child": {
+    "questId": "missing_child",
+    "name": "The Missing Child",
+    "description": "A young child has gone missing from the village. The villagers are frantic, and they are desperate for help. They believe the child might have been kidnapped by a group of bandits.",
+    "questGiver": {
+      "name": "Mrs. Willow",
+      "location": "Brightwood Village"
+    },
+    "questType": "side",
+    "difficulty": "medium",
+    "level": {
+      "minimum": 2,
+      "recommended": 4
+    },
+    "status": "inactive",
+    "progress": {
+      "currentObjective": 0,
+      "objectivesCompleted": 0
+    },
+    "objectives": [
+      {
+        "id": 1,
+        "description": "Find the missing child and return them safely",
+        "type": "rescue",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 75,
+          "gold": 150
+        }
+      }
+    ],
+    "rewards": {
+      "completion": {
+        "experience": 150,
+        "gold": 300,
+        "items": ["healing_potion"],
+        "reputation": {"village": 15}
+      }
+    },
+    "tags": ["rescue", "urgent"],
+    "timeLimit": null,
+    "prerequisites": [],
+    "unlocks": []
+  },
+  "cursed_artifact": {
+    "questId": "cursed_artifact",
+    "name": "The Cursed Artifact",
+    "description": "An ancient artifact has been unearthed near the village, but it is rumored to be cursed. The villagers are afraid to touch it, but they believe it holds great power. They need you to investigate its nature and find a way to control its power.",
+    "questGiver": {
+      "name": "Old Man Thorne",
+      "location": "Brightwood Village"
+    },
+    "questType": "side",
+    "difficulty": "hard",
+    "level": {
+      "minimum": 5,
+      "recommended": 7
+    },
+    "status": "inactive",
+    "progress": {
+      "currentObjective": 0,
+      "objectivesCompleted": 0
+    },
+    "objectives": [
+      {
+        "id": 1,
+        "description": "Discover the true nature of the cursed artifact and find a way to control it",
+        "type": "investigation",
+        "status": "incomplete",
+        "rewards": {
+          "experience": 150,
+          "gold": 300
+        }
+      }
+    ],
+    "rewards": {
+      "completion": {
+        "experience": 300,
+        "gold": 600,
+        "items": ["cursed_amulet", "ancient_tome"],
+        "reputation": {"scholars": 20}
+      }
+    },
+    "tags": ["mystery", "magic", "artifact"],
+    "timeLimit": null,
+    "prerequisites": [],
+    "unlocks": ["artifact_mastery_quest"]
+  }
+}

@@ -1,0 +1,54 @@
+{
+    "Human": {
+        "Name": "Human",
+        "description": "Humans are the most adaptable and ambitious people among the common races. They have widely varying tastes, morals, and customs in the many different lands where they have settled. When they settle, though, they stay: they build cities to last for the ages.",
+        "AbilityScoreImprovements": {
+            "Strength": 1,
+            "Dexterity": 1,
+            "Constitution": 1,
+            "Intelligence": 1,
+            "Wisdom": 1,
+            "Charisma": 1
+        }
+    },
+    "Dwarf": {
+        "Name": "Dwarf",
+        "description": "Bold and hardy, dwarves are known as skilled warriors, miners, and workers of stone and metal. Though they stand well under 5 feet tall, dwarves are so broad and compact that they can weigh as much as a human standing nearly two feet taller.",
+        "AbilityScoreImprovements": {
+            "Strength": 2,
+            "Constitution": 2
+        }
+    },
+    "Elf":{
+        "Name": "Elf",
+        "description": "Elves are a magical people of otherworldly grace, living in the world but not entirely part of it. They live in places of ethereal beauty, in the midst of ancient forests or in silvery spires glittering with faerie light.",
+        "AbilityScoreImprovements": {
+            "Dexterity": 1,
+            "Intelligence": 1
+        }
+    },
+    "Gnome":{
+        "Name": "Gnome",
+        "description": "A gnome's energy and enthusiasm for living shines through every inch of his or her tiny body. Gnomes average slightly over 3 feet tall and weigh 40 to 45 pounds. Their tan or brown faces are usually adorned with broad smiles.",
+        "AbilityScoreImprovements": {
+            "Dexterity": 1,
+            "Wisdom": 2
+        }
+    },
+    "Halfling": {
+        "Name": "Halfling",
+        "description": "The diminutive halflings survive in a world full of larger creatures by avoiding notice or, barring that, avoiding offense. Standing about 3 feet tall, they appear relatively harmless and so have managed to survive for centuries.",
+        "AbilityScoreImprovements": {
+            "Dexterity": 2,
+            "Charisma": 1
+        }
+    },
+    "Orc": {
+        "Name": "Orc",
+        "description": "Orcs are savage raiders and pillagers with stooped postures, low foreheads, and piggish faces with prominent lower canines that resemble tusks. Though brutish in appearance, orcs can be surprisingly cunning and strategic.",
+        "AbilityScoreImprovements": {
+            "Strength": 2,
+            "Constitution": 1
+        }
+    }
+}

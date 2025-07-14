@@ -1,0 +1,30 @@
+{
+    "Fighter": {
+        "name": "Fighter",
+        "description": "A master of martial combat, skilled with a variety of weapons and armor. Fighters share an unparalleled mastery with weapons and armor, and a thorough knowledge of the skills of combat.",
+        "abilities": {
+            "Resolve": {
+                "description": "Use an action to instantly heal."
+            },
+            "Power Strike": {
+                "description": "A devastating attack that deals extra damage."
+            }
+        }
+    },
+    "Wizard": {
+        "name": "Wizard",
+        "description": "A scholarly magic-user capable of manipulating the structures of spellcasting to suit their needs. Wizards live and die by their spells, learning to cast more and more powerful magic as they advance."
+    },
+    "Cleric": {
+        "name": "Cleric",
+        "description": "A priestly champion who wields divine magic in service of a higher power. Clerics are intermediaries between the mortal world and the distant planes of the gods, healing allies and smiting foes."
+    },
+    "Rogue": {
+        "name": "Rogue",
+        "description": "A scoundrel who uses stealth and trickery to overcome obstacles. Rogues have many features in common, including their emphasis on perfecting their skills and their ability to strike with devastating precision."
+    },
+    "Ranger": {
+        "name": "Ranger",
+        "description": "A warrior of the wilderness, skilled in tracking, survival, and combat. Rangers are protectors of the wild places of the world, using their knowledge of nature to hunt down threats."
+    }
+}

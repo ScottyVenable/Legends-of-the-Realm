@@ -1,0 +1,22 @@
+{
+    "Sage": {
+        "name": "Sage",
+        "description": "You spent years learning the lore of the multiverse. You scoured manuscripts, studied scrolls, and listened to the greatest experts on the subjects that interest you. Your efforts have made you a master of the esoteric. You are learned in languages, histories, and mysteries that few others comprehend."
+    },
+    "Noble": {
+        "name": "Noble",
+        "description": "You understand wealth, power, and privilege. You carry a noble title, and your family owns land, collects taxes, and wields significant political influence. You might be a pampered aristocrat unfamiliar with work or discomfort, a former merchant just elevated to the nobility, or a disinherited scoundrel with a disproportionate sense of entitlement."
+    },
+    "Criminal": {
+        "name": "Criminal",
+        "description": "You are an experienced criminal with a history of breaking the law. You have spent a lot of time among other criminals and still have contacts within the criminal underworld. You're far closer than most people to the world of murder, theft, and violence that pervades the underbelly of civilization, and you have survived up to this point by flouting the rules and regulations of society."
+    },
+    "Acolyte": {
+        "name": "Acolyte",
+        "description": "You have spent your life in the service of a temple to a specific god or pantheon of gods. You act as an intermediary between the realm of the holy and the mortal world, performing sacred rites and offering sacrifices in order to conduct worshippers into the presence of the divine. You are not necessarily a cleric—performing sacred rites is not the same thing as channeling divine power."
+    },
+    "Traumatized": {
+        "name": "Traumatized",
+        "description": "You have experienced something terrible that has left deep mental and emotional scars. This trauma has shaped your worldview and drives your actions. Perhaps you witnessed a horrific battle, lost loved ones to violence, or experienced supernatural terror. Despite your wounds, or perhaps because of them, you have found the strength to continue on and face the darkness in the world."
+    }
+}

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legends of the Realm - Browser Edition</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=MedievalSharp&family=Cinzel:wght@400;600&family=Asul:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Title Screen -->
+        <div id="title-screen" class="screen active">
+            <div class="title-art">
+                <pre class="ascii-art title-text">
+ ██╗     ███████╗ ██████╗ ███████╗███╗   ██╗██████╗ ███████╗
+ ██║     ██╔════╝██╔════╝ ██╔════╝████╗  ██║██╔══██╗██╔════╝
+ ██║     █████╗  ██║  ███╗█████╗  ██╔██╗ ██║██║  ██║███████╗
+ ██║     ██╔══╝  ██║   ██║██╔══╝  ██║╚██╗██║██║  ██║╚════██║
+ ███████╗███████╗╚██████╔╝███████╗██║ ╚████║██████╔╝███████║
+ ╚══════╝╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═════╝ ╚══════╝
+                </pre>
+                <pre class="ascii-art subtitle">
+                        ████▄ ▄████  
+                        █   █ █▀   ▀ 
+                        █   █ █▀▀    
+                        ▀████ █      
+                               █     
+                                ▀
+                </pre>
+                <pre class="ascii-art realm-text">
+███    ▄█    █▄     ▄████████       ▄████████  ▄████████  ▄████████ ▄█       ▄▄▄▄███▄▄▄▄   
+▀█████████▄ ███    ███   ███    ███      ███    ███ ███    ███ ███    ███ ███     ▄██▀▀▀███▀▀▀██▄ 
+ ▀███▀▀██ ███    ███   ███    █▀       ███    ███ ███    █▀  ███    ███ ███     ███   ███   ███ 
+  ███   ▀ ▄███▄▄▄▄███▄▄▄███▄▄▄         ▄███▄▄▄▄██▀▄███▄▄▄     ███    ███ ███     ███   ███   ███ 
+  ███    ▀▀███▀▀▀▀███▀ ▀▀███▀▀▀        ▀▀███▀▀▀▀▀ ▀▀███▀▀▀   ▀███████████ ███     ███   ███   ███ 
+  ███      ███    ███    ███    █▄     ▀███████████ ███    █▄  ███    ███ ███     ███   ███   ███ 
+  ███      ███    ███    ███    ███      ███    ███ ███    ███ ███    ███ ███▌  ▄ ███   ███   ███ 
+ ▄████▀    ███    █▀     ██████████      ███    ███ ██████████ ███    █▀  █████▄▄██ ▀█   ███   █▀  
+                                         ███    ███                        ▀              
+                </pre>
+            </div>
+            <div class="game-info">
+                <p class="version">Version <span id="game-version">a0.14.0</span></p>
+                <p class="creator">Created by <span id="game-developer">Scotty Venable</span> <span id="game-year">2024</span></p>
+            </div>
+            <div class="menu-container">
+                <button class="menu-btn" onclick="startNewGame()">New Game</button>
+                <button class="menu-btn" onclick="loadGame()">Load Game</button>
+                <button class="menu-btn" onclick="showChangelog()">Changes</button>
+                <button class="menu-btn" onclick="showSettings()">Settings</button>
+                <button class="menu-btn" onclick="exitGame()">Exit Game</button>
+            </div>
+        </div>
+
+        <!-- Character Creation Screen -->
+        <div id="character-creation" class="screen">
+            <div class="screen-title">
+                <h2>Create Your Legend</h2>
+                <p style="margin: 0.5rem 0; color: #d4af37; font-style: italic;">Forge your destiny in the realms of adventure</p>
+            </div>
+            <div class="character-form">
+                <div class="form-section">
+                    <label for="character-name">Character Name:</label>
+                    <input type="text" id="character-name" placeholder="Enter your hero's name (e.g., Aragorn, Elaria, Thorin)">
+                </div>
+                
+                <div class="form-section">
+                    <label>Gender:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="male" name="gender" value="Male">
+                        <label for="male">Male</label>
+                        <input type="radio" id="female" name="gender" value="Female">
+                        <label for="female">Female</label>
+                        <input type="radio" id="non-binary" name="gender" value="Non-binary">
+                        <label for="non-binary">Non-binary</label>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label for="race-select">Race:</label>
+                    <select id="race-select">
+                        <option value="">Choose your ancestral heritage...</option>
+                    </select>
+                    <div id="race-description" class="description">
+                        <p style="color: #999; font-style: italic;">Select a race to learn about their unique traits and abilities...</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label for="class-select">Class:</label>
+                    <select id="class-select">
+                        <option value="">Choose your profession...</option>
+                    </select>
+                    <div id="class-description" class="description">
+                        <p style="color: #999; font-style: italic;">Select a class to discover your combat style and special abilities...</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label for="background-select">Background:</label>
+                    <select id="background-select">
+                        <option value="">Choose your origin story...</option>
+                    </select>
+                    <div id="background-description" class="description">
+                        <p style="color: #999; font-style: italic;">Select a background to learn about your character's past and skills...</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label>Attribute Allocation:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="roll-stats" name="stat-method" value="roll" checked>
+                        <label for="roll-stats">Roll for Stats (Random)</label>
+                        <input type="radio" id="point-buy" name="stat-method" value="pointbuy">
+                        <label for="point-buy">Point Buy (Custom)</label>
+                    </div>
+                </div>
+
+                <div id="attributes-container">
+                    <h3>Attributes</h3>
+                    <p style="margin: 0.5rem 0; color: #d4af37; font-size: 0.9rem;">These determine your character's natural abilities and talents.</p>
+                    <div id="rolled-attributes" class="attributes-display">
+                        <button onclick="rollAttributes()" style="background: linear-gradient(45deg, #8b4513, #a0522d); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-family: 'Cinzel', serif; cursor: pointer;">Roll Attributes</button>
+                        <div id="attribute-results">
+                            <p style="color: #999; font-style: italic; margin-top: 1rem;">Click the button above to roll your character's attributes...</p>
+                        </div>
+                    </div>
+                    <div id="pointbuy-attributes" class="attributes-display" style="display: none;">
+                        <p>Points remaining: <span id="points-remaining">27</span></p>
+                        <div id="pointbuy-controls"></div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button onclick="createCharacter()" id="create-btn" disabled style="background: linear-gradient(45deg, #006400, #228b22); opacity: 0.6;">Forge Your Legend</button>
+                    <button onclick="showTitleScreen()" style="background: linear-gradient(45deg, #8b0000, #a00000);">Back to Title</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-interface">
+                <!-- Character Info Panel -->
+                <div class="character-panel">
+                    <h3 id="character-name-display">Aragorn the Bold</h3>
+                    <div class="character-stats">
+                        <p><strong>Level:</strong> <span id="char-level">3</span></p>
+                        <p><strong>Health:</strong> <span id="char-health">24</span>/<span id="char-max-health">30</span></p>
+                        <p><strong>Gold:</strong> <span id="char-gold">127</span></p>
+                        <p><strong>Location:</strong> <span id="char-location">Village of Millhaven</span></p>
+                        <hr style="border-color: #8b4513; margin: 0.5rem 0;">
+                        <p><strong>Class:</strong> Fighter</p>
+                        <p><strong>Race:</strong> Human</p>
+                        <p><strong>Background:</strong> Noble</p>
+                        <hr style="border-color: #8b4513; margin: 0.5rem 0;">
+                        <div style="font-size: 0.85rem;">
+                            <p><strong>STR:</strong> 16 (+3) | <strong>DEX:</strong> 14 (+2)</p>
+                            <p><strong>CON:</strong> 15 (+2) | <strong>INT:</strong> 12 (+1)</p>
+                            <p><strong>WIS:</strong> 13 (+1) | <strong>CHA:</strong> 11 (+0)</p>
+                        </div>
+                    </div>
+                    <button onclick="showCharacterSheet()" class="panel-btn">Character Sheet</button>
+                    <button onclick="showInventory()" class="panel-btn">Inventory (12 items)</button>
+                    <button onclick="gameEngine.showJournal()" class="panel-btn">Journal</button>
+                    <button onclick="saveGame()" class="panel-btn">Save Game</button>
+                    
+                    <div style="background: rgba(139, 69, 19, 0.3); padding: 0.5rem; border-radius: 4px; margin-top: 1rem; font-size: 0.8rem;">
+                        <p style="margin: 0; color: #d4af37;"><strong>Current Quest:</strong></p>
+                        <p style="margin: 0.25rem 0 0 0;">Find the missing merchant caravan on the forest road.</p>
+                    </div>
+                </div>
+
+                <!-- Main Game Area -->
+                <div class="main-game-area">
+                    <div id="game-display" class="game-display">
+                        <div id="location-title" class="location-title">
+                            <h2>The Village of Millhaven</h2>
+                        </div>
+                        <div id="location-description" class="location-description">
+                            <p>You stand in the heart of a bustling medieval village. Cobblestone streets wind between timber-framed buildings with thatched roofs. The warm glow of lanterns flickers in windows as merchants hawk their wares. To the north, you can see the imposing silhouette of an ancient castle perched on a hill. The air is filled with the sounds of daily life - children playing, blacksmiths hammering, and bards singing tales of distant adventures.</p>
+                            <p><em>The realm awaits your exploration...</em></p>
+                        </div>
+                        <div id="game-options" class="game-options">
+                            <h3>Available Actions:</h3>
+                            <div class="actions-grid">
+                                <button class="option-btn" onclick="gameEngine.enterShop('The Thirsty Hare')">Visit the Merchant's Shop</button>
+                                <button class="option-btn">Explore the Wilderness</button>
+                                <button class="option-btn" onclick="gameEngine.enterShop('The Thirsty Hare')">Enter the Tavern</button>
+                                <button class="option-btn" onclick="gameEngine.enterShop('Bugbee&#39;s Blades &amp; Brews')">Visit the Blacksmith</button>
+                                <button class="option-btn">Consult the Village Sage</button>
+                                <button class="option-btn">Pray at the Temple</button>
+                            </div>
+                            
+                            <hr style="margin: 1rem 0; border-color: #8b4513;">
+                            <h4 style="color: #d4af37; margin: 0.5rem 0;">Travel Destinations:</h4>
+                            <div class="travel-grid">
+                                <button class="option-btn">Dark Forest (Beginner)</button>
+                                <button class="option-btn">Ancient Castle Ruins (Intermediate)</button>
+                                <button class="option-btn">Misty Mountains (Advanced)</button>
+                                <button class="option-btn">Forgotten Desert (Expert)</button>
+                            </div>
+                            
+                            <hr style="margin: 1rem 0; border-color: #8b4513;">
+                            <div style="background: rgba(139, 69, 19, 0.3); padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                <h4 style="color: #d4af37; margin: 0 0 0.5rem 0;">Recent Events:</h4>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">• Strange lights were seen over the Dark Forest last night...</p>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">• The merchant caravan from the capital is three days overdue...</p>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;">• Local farmers report missing livestock near the old ruins...</p>
+                            </div>
+                            
+                            <div style="background: rgba(0, 100, 0, 0.2); padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #228b22;">
+                                <h4 style="color: #90ee90; margin: 0 0 0.5rem 0;">Active Quests:</h4>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>The Missing Merchant</strong> - Investigate the overdue caravan</p>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>Forest Lights Mystery</strong> - Explore the strange phenomena</p>
+                                <p style="margin: 0.5rem 0; font-size: 0.9rem;"><strong>Protect the Livestock</strong> - Guard duty at nearby farms</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Controls -->
+                <div class="audio-panel">
+                    <h4>Controls</h4>
+                    <div class="audio-controls">
+                        <button id="music-toggle" onclick="toggleMusic()">Music: ON</button>
+                        <button id="sfx-toggle" onclick="toggleSFX()">SFX: ON</button>
+                        <button id="fullscreen-toggle" onclick="toggleFullscreen()">Fullscreen</button>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50" onchange="setVolume(this.value)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal dialogs -->
+        <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3 id="modal-title">Modal Title</h3>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div id="modal-body" class="modal-body">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Loading game data...</p>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-overlay" class="pause-overlay">
+            <div class="pause-menu">
+                <h2>Game Paused</h2>
+                <div class="pause-buttons">
+                    <button class="pause-btn" onclick="resumeGame()">Resume Game</button>
+                    <button class="pause-btn" onclick="saveGame(); showPauseMessage('Game Saved!')">Save Game</button>
+                    <button class="pause-btn" onclick="showPauseSettings()">Settings</button>
+                    <button class="pause-btn danger" onclick="confirmReturnToTitle()">Return to Title</button>
+                </div>
+                <div class="pause-info">
+                    <p>Press <strong>ESC</strong> to resume • Game time is paused</p>
+                    <p id="pause-status"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="background-music" loop>
+        <source src="audio/music/title.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="sfx-player">
+        <source src="" type="audio/wav">
+        <source src="" type="audio/mpeg">
+    </audio>
+
+    <!-- Game Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/character.js"></script>
+    <script src="js/quest-manager.js"></script>
+    <script src="js/developer.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

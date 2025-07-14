@@ -1,0 +1,2358 @@
+// Main game engine and logic
+class GameEngine {
+    constructor() {
+        this.gameState = 'title';
+        this.currentLocation = null;
+        this.gameLoaded = false;
+        this.saveKey = 'legends_of_the_realm_save';
+        
+        // Journal system - will be populated from data files
+        this.journal = {
+            rumors: [],
+            quests: []
+        };
+        
+        // Changelog data
+        this.changelogData = {};
+    }
+
+    // Initialize the game
+    async init() {
+        console.log('Initializing Legends of the Realm...');
+        
+        // Show loading screen
+        this.showLoadingScreen();
+        
+        try {
+            // Load all game data
+            const dataLoaded = await window.dataManager.loadAllData();
+            if (!dataLoaded) {
+                throw new Error('Failed to load game data');
+            }
+
+            // Initialize quest manager
+            await window.questManager.init();
+
+            // Load rumors and quests from data files
+            await this.loadJournalData();
+
+            // Load changelog data
+            await this.loadChangelogData();
+
+            // Initialize audio and start title music
+            if (window.audioManager && window.audioManager.isInitialized) {
+                window.audioManager.playMusic('title');
+            }
+
+            // Hide loading screen
+            this.hideLoadingScreen();
+
+            // Show title screen
+            this.showTitleScreen();
+
+            this.gameLoaded = true;
+            console.log('Game initialized successfully');
+
+        } catch (error) {
+            console.error('Failed to initialize game:', error);
+            this.hideLoadingScreen();
+            this.showError('Failed to initialize game. Please refresh the page.');
+        }
+    }
+
+    // Load rumors and quests from data files
+    async loadJournalData() {
+        try {
+            // Load rumors
+            const rumorsResponse = await fetch('data/rumors.json');
+            const rumorsData = await rumorsResponse.json();
+            
+            // Add heard rumors to journal
+            Object.values(rumorsData).forEach(rumor => {
+                if (rumor.heard) {
+                    this.journal.rumors.push({
+                        id: rumor.id,
+                        title: rumor.title,
+                        content: rumor.content,
+                        discovered: true,
+                        location: rumor.location
+                    });
+                }
+            });
+
+            // Load quests
+            const questsResponse = await fetch('data/quests.json');
+            const questsData = await questsResponse.json();
+            
+            // Add available quests to journal
+            Object.values(questsData).forEach(quest => {
+                if (quest.available) {
+                    this.journal.quests.push({
+                        id: quest.id,
+                        title: quest.title,
+                        description: quest.description,
+                        objective: quest.objective,
+                        status: quest.status,
+                        location: quest.location,
+                        reward: quest.reward
+                    });
+                }
+            });
+
+            console.log('Journal data loaded successfully');
+        } catch (error) {
+            console.error('Failed to load journal data:', error);
+            // Fall back to default data if files can't be loaded
+            this.journal = {
+                rumors: [
+                    {
+                        id: 'forest_lights',
+                        title: 'Strange Lights in the Forest',
+                        content: 'I heard from the tavern keeper that strange lights were seen over the Dark Forest last night. The locals seem uneasy about it.',
+                        discovered: true,
+                        location: 'Village of Millhaven'
+                    }
+                ],
+                quests: [
+                    {
+                        id: 'missing_merchant',
+                        title: 'The Missing Merchant',
+                        description: 'I need to investigate the overdue caravan on the forest road.',
+                        objective: 'Investigate the overdue caravan',
+                        status: 'active',
+                        location: 'Forest Road',
+                        reward: '50 gold, experience'
+                    }
+                ]
+            };
+        }
+    }
+
+    // Load changelog data from JSON file
+    async loadChangelogData() {
+        try {
+            const response = await fetch('data/gamechanges.json');
+            this.changelogData = await response.json();
+            console.log('Changelog data loaded successfully');
+        } catch (error) {
+            console.error('Failed to load changelog data:', error);
+            this.changelogData = {};
+        }
+    }
+
+    // Show loading screen
+    showLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.classList.add('active');
+        }
+    }
+
+    // Hide loading screen
+    hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.classList.remove('active');
+        }
+    }
+
+    // Show title screen
+    showTitleScreen() {
+        this.gameState = 'title';
+        this.switchScreen('title-screen');
+        
+        // Always play title music when showing title screen
+        if (window.audioManager && window.audioManager.isInitialized) {
+            console.log('Starting title music...');
+            window.audioManager.playMusic('title');
+        }
+    }
+
+    // Start new game
+    startNewGame() {
+        if (window.audioManager) {
+            window.audioManager.playSFX('newGame');
+        }
+        this.gameState = 'character-creation';
+        this.setupCharacterCreation();
+        this.switchScreen('character-creation');
+        if (window.audioManager) {
+            window.audioManager.playMusic('creation');
+        }
+        
+        // Enter fullscreen for immersive experience
+        if (window.enterFullscreenOnGameStart) {
+            window.enterFullscreenOnGameStart();
+        }
+    }
+
+    // Setup character creation screen
+    setupCharacterCreation() {
+        // Populate race dropdown
+        const raceSelect = document.getElementById('race-select');
+        if (raceSelect) {
+            const races = window.dataManager.getAllRaces();
+            raceSelect.innerHTML = '<option value="">Choose your race...</option>';
+            races.forEach(race => {
+                const option = document.createElement('option');
+                option.value = race;
+                option.textContent = race;
+                raceSelect.appendChild(option);
+            });
+
+            raceSelect.addEventListener('change', (e) => {
+                const raceData = window.dataManager.getRace(e.target.value);
+                const description = document.getElementById('race-description');
+                if (description && raceData) {
+                    let content = raceData.description || 'No description available.';
+                    
+                    // Add attribute bonuses info
+                    if (raceData.AbilityScoreImprovements) {
+                        content += '\n\nAttribute Bonuses: ';
+                        const bonuses = [];
+                        for (const [attr, bonus] of Object.entries(raceData.AbilityScoreImprovements)) {
+                            if (bonus > 0) {
+                                bonuses.push(`${attr} +${bonus}`);
+                            }
+                        }
+                        content += bonuses.join(', ');
+                    }
+                    
+                    description.textContent = content;
+                }
+                this.checkCharacterFormCompletion();
+            });
+        }
+
+        // Populate class dropdown
+        const classSelect = document.getElementById('class-select');
+        if (classSelect) {
+            const classes = window.dataManager.getAllClasses();
+            classSelect.innerHTML = '<option value="">Choose your class...</option>';
+            classes.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls;
+                option.textContent = cls;
+                classSelect.appendChild(option);
+            });
+
+            classSelect.addEventListener('change', (e) => {
+                const classData = window.dataManager.getClass(e.target.value);
+                const description = document.getElementById('class-description');
+                if (description && classData) {
+                    let content = classData.description || 'No description available.';
+                    
+                    // Add abilities info
+                    if (classData.abilities) {
+                        content += '\n\nSpecial Abilities: ';
+                        const abilities = Object.keys(classData.abilities);
+                        if (abilities.length > 0) {
+                            content += abilities.join(', ');
+                        }
+                    }
+                    
+                    description.textContent = content;
+                }
+                this.checkCharacterFormCompletion();
+            });
+        }
+
+        // Populate background dropdown
+        const backgroundSelect = document.getElementById('background-select');
+        if (backgroundSelect) {
+            const backgrounds = window.dataManager.getAllBackgrounds();
+            backgroundSelect.innerHTML = '<option value="">Choose your background...</option>';
+            backgrounds.forEach(bg => {
+                const option = document.createElement('option');
+                option.value = bg;
+                option.textContent = bg;
+                backgroundSelect.appendChild(option);
+            });
+
+            backgroundSelect.addEventListener('change', (e) => {
+                const bgData = window.dataManager.getBackground(e.target.value);
+                const description = document.getElementById('background-description');
+                if (description && bgData) {
+                    description.textContent = bgData.description || 'No description available.';
+                }
+                this.checkCharacterFormCompletion();
+            });
+        }
+
+        // Setup attribute method switching
+        const statMethodRadios = document.querySelectorAll('input[name="stat-method"]');
+        statMethodRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const rolledDiv = document.getElementById('rolled-attributes');
+                const pointbuyDiv = document.getElementById('pointbuy-attributes');
+                
+                if (e.target.value === 'pointbuy') {
+                    rolledDiv.style.display = 'none';
+                    pointbuyDiv.style.display = 'block';
+                    CharacterCreator.setupPointBuy();
+                } else {
+                    rolledDiv.style.display = 'block';
+                    pointbuyDiv.style.display = 'none';
+                }
+            });
+        });
+
+        // Setup form change listeners
+        const nameInput = document.getElementById('character-name');
+        const genderRadios = document.querySelectorAll('input[name="gender"]');
+        
+        if (nameInput) {
+            nameInput.addEventListener('input', this.checkCharacterFormCompletion.bind(this));
+        }
+        
+        genderRadios.forEach(radio => {
+            radio.addEventListener('change', this.checkCharacterFormCompletion.bind(this));
+        });
+    }
+
+    // Roll attributes for character creation
+    rollAttributes() {
+        const rollStat = () => {
+            // Roll 4d6, drop lowest
+            const rolls = [];
+            for (let i = 0; i < 4; i++) {
+                rolls.push(Math.floor(Math.random() * 6) + 1);
+            }
+            rolls.sort((a, b) => b - a);
+            return rolls[0] + rolls[1] + rolls[2]; // Sum of highest 3
+        };
+
+        const attributes = {
+            strength: rollStat(),
+            dexterity: rollStat(),
+            constitution: rollStat(),
+            intelligence: rollStat(),
+            wisdom: rollStat(),
+            charisma: rollStat()
+        };
+
+        // Display the rolled attributes
+        const resultDiv = document.getElementById('attribute-results');
+        if (resultDiv) {
+            resultDiv.innerHTML = `
+                <div class="rolled-stats">
+                    <h4>Your Rolled Stats:</h4>
+                    <div class="stat-grid">
+                        <div class="stat-item">Strength: <span class="stat-value">${attributes.strength}</span></div>
+                        <div class="stat-item">Dexterity: <span class="stat-value">${attributes.dexterity}</span></div>
+                        <div class="stat-item">Constitution: <span class="stat-value">${attributes.constitution}</span></div>
+                        <div class="stat-item">Intelligence: <span class="stat-value">${attributes.intelligence}</span></div>
+                        <div class="stat-item">Wisdom: <span class="stat-value">${attributes.wisdom}</span></div>
+                        <div class="stat-item">Charisma: <span class="stat-value">${attributes.charisma}</span></div>
+                    </div>
+                    <button onclick="gameEngine.rollAttributes()" class="reroll-btn">Reroll</button>
+                </div>
+            `;
+        }
+
+        // Store the attributes for character creation
+        window.rolledAttributes = attributes;
+        this.checkCharacterFormCompletion();
+    }
+
+    // Add visual feedback for form completion
+    updateFormValidation() {
+        const createBtn = document.getElementById('create-btn');
+        const name = document.getElementById('character-name')?.value;
+        const gender = document.querySelector('input[name="gender"]:checked')?.value;
+        const race = document.getElementById('race-select')?.value;
+        const characterClass = document.getElementById('class-select')?.value;
+        const background = document.getElementById('background-select')?.value;
+        const statMethod = document.querySelector('input[name="stat-method"]:checked')?.value;
+        
+        // Check what's missing
+        const missing = [];
+        if (!name) missing.push('Character Name');
+        if (!gender) missing.push('Gender');
+        if (!race) missing.push('Race');
+        if (!characterClass) missing.push('Class');
+        if (!background) missing.push('Background');
+        if (statMethod !== 'pointbuy' && !window.rolledAttributes) missing.push('Roll Attributes');
+        
+        if (createBtn) {
+            const isComplete = missing.length === 0;
+            createBtn.disabled = !isComplete;
+            
+            if (missing.length > 0) {
+                createBtn.textContent = `Complete: ${missing.join(', ')}`;
+                createBtn.style.opacity = '0.6';
+            } else {
+                createBtn.textContent = 'Create Character';
+                createBtn.style.opacity = '1';
+            }
+        }
+    }
+
+    // Check if character creation form is complete
+    checkCharacterFormCompletion() {
+        this.updateFormValidation();
+    }
+
+    // Create character and start game
+    createCharacter() {
+        try {
+            window.gameCharacter = Character.createFromForm();
+            
+            if (!window.gameCharacter.isValid()) {
+                this.showError('Please complete all character creation fields.');
+                return;
+            }
+
+            console.log('Character created:', window.gameCharacter.name);
+            if (window.audioManager) {
+                window.audioManager.playSFX('newGame');
+            }
+            
+            this.startGame();
+            
+        } catch (error) {
+            console.error('Error creating character:', error);
+            this.showError('Failed to create character. Please try again.');
+        }
+    }
+
+    // Start the main game
+    startGame() {
+        this.gameState = 'playing';
+        this.switchScreen('game-screen');
+        if (window.audioManager) {
+            window.audioManager.playMusic('traveling');
+        }
+        
+        // Update character display
+        this.updateCharacterDisplay();
+        
+        // Initialize starting quests (for demo purposes)
+        this.initializeStartingQuests();
+        
+        // Start at Village
+        this.moveToLocation('Village');
+        
+        // Ensure fullscreen for game experience
+        if (window.enterFullscreenOnGameStart) {
+            window.enterFullscreenOnGameStart();
+        }
+    }
+
+    // Initialize starting quests for new characters
+    initializeStartingQuests() {
+        if (window.questManager && window.gameCharacter) {
+            // Check if this is a new character (no existing quest data)
+            if (!window.gameCharacter.questData || window.gameCharacter.questData.length === 0) {
+                // Add a starting quest
+                window.questManager.addQuest('goblin_threat');
+                console.log('Starting quest added to new character');
+            }
+        }
+    }
+
+    // Move to a new location
+    moveToLocation(locationName) {
+        if (window.isPaused && window.isPaused() && this.gameState === 'playing') return;
+        
+        const locationData = window.dataManager.getLocation(locationName);
+        if (!locationData) {
+            console.error(`Location '${locationName}' not found`);
+            return;
+        }
+
+        this.currentLocation = locationName;
+        window.gameCharacter.location = locationName;
+        
+        // Update location display
+        const locationTitle = document.getElementById('location-title');
+        const locationDescription = document.getElementById('location-description');
+        const gameOptions = document.getElementById('game-options');
+
+        if (locationTitle) {
+            locationTitle.innerHTML = `<h2>${locationData.name || locationName}</h2>`;
+        }
+
+        if (locationDescription) {
+            locationDescription.innerHTML = `<p>${locationData.description || 'You are in ' + locationName}</p>`;
+        }
+
+        // Generate location options
+        if (gameOptions) {
+            this.generateLocationOptions(locationData);
+        }
+
+        // Update character location display
+        this.updateCharacterDisplay();
+
+        // Play location-specific music
+        this.playLocationMusic(locationName);
+    }
+
+    // Generate interactive options for current location
+    generateLocationOptions(locationData) {
+        const gameOptions = document.getElementById('game-options');
+        if (!gameOptions) return;
+
+        let optionsHTML = '';
+
+        // Add location-specific actions in a grid
+        if (locationData.actions && locationData.actions.length > 0) {
+            optionsHTML += '<h3>Available Actions:</h3>';
+            optionsHTML += '<div class="actions-grid">';
+            locationData.actions.forEach(action => {
+                optionsHTML += `
+                    <button class="option-btn" onclick="gameEngine.handleLocationAction('${action.id}')">
+                        ${action.text}
+                    </button>
+                `;
+            });
+            optionsHTML += '</div>';
+        }
+
+        // Add general exploration option
+        optionsHTML += '<div class="actions-grid" style="margin-top: 1rem;">';
+        optionsHTML += `
+            <button class="option-btn" onclick="gameEngine.exploreLocation()">
+                Explore & Hunt
+            </button>
+        `;
+
+        // Add NPCs to the same grid
+        if (locationData.npcs) {
+            locationData.npcs.forEach(npcName => {
+                optionsHTML += `
+                    <button class="option-btn" onclick="gameEngine.interactWithNPC('${npcName}')">
+                        Talk to ${npcName}
+                    </button>
+                `;
+            });
+        }
+
+        // Add shops to the same grid
+        if (locationData.shops) {
+            locationData.shops.forEach(shopName => {
+                optionsHTML += `
+                    <button class="option-btn" onclick="gameEngine.enterShop('${shopName}')">
+                        Enter ${shopName}
+                    </button>
+                `;
+            });
+        }
+
+        // Add rest option
+        optionsHTML += `
+            <button class="option-btn" onclick="gameEngine.restAtLocation()">
+                Rest and Recover
+            </button>
+        `;
+        optionsHTML += '</div>';
+
+        // Add connections to other locations in a travel grid
+        if (locationData.connections && locationData.connections.length > 0) {
+            optionsHTML += '<hr style="margin: 1.5rem 0; border-color: #8b4513;">';
+            optionsHTML += '<h4 style="color: #d4af37; margin: 0.5rem 0 1rem 0;">Travel Destinations:</h4>';
+            optionsHTML += '<div class="travel-grid">';
+            locationData.connections.forEach(connection => {
+                optionsHTML += `
+                    <button class="option-btn" onclick="gameEngine.moveToLocation('${connection}')">
+                        Go to ${connection}
+                    </button>
+                `;
+            });
+            optionsHTML += '</div>';
+        }
+
+        gameOptions.innerHTML = optionsHTML;
+    }
+
+    // Explore current location for encounters
+    exploreLocation() {
+        if (window.isPaused && window.isPaused()) return;
+        
+        console.log('Exploring location for encounters...');
+        if (window.audioManager) {
+            window.audioManager.playSFX('click');
+        }
+        
+        const locationData = window.dataManager.getLocation(this.currentLocation);
+        if (!locationData || !locationData.enemies) {
+            this.showMessage('You explore the area but find nothing of interest.');
+            return;
+        }
+
+        // 60% chance of encounter
+        const encounterChance = Math.random();
+        if (encounterChance < 0.6) {
+            const enemies = locationData.enemies;
+            const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+            this.triggerRandomEncounter(randomEnemy);
+        } else {
+            // No encounter, but maybe find some gold
+            const goldFound = Math.floor(Math.random() * 15) + 5;
+            window.gameCharacter.addGold(goldFound);
+            this.updateCharacterDisplay();
+            this.showMessage(`You explore the area and find ${goldFound} gold pieces hidden away.`);
+        }
+    }
+
+    // Trigger random encounter
+    triggerRandomEncounter(enemyName) {
+        const enemyData = window.dataManager.getEnemy(enemyName);
+        if (!enemyData) return;
+
+        const encounterHTML = `
+            <div class="encounter-dialog">
+                <h3>Random Encounter!</h3>
+                <p>A wild <strong>${enemyData.name}</strong> appears!</p>
+                <p><em>${enemyData.description || 'It looks ready for a fight!'}</em></p>
+                <div class="encounter-actions">
+                    <button onclick="gameEngine.closeModal(); gameEngine.startCombat('${enemyName}')">
+                        Fight!
+                    </button>
+                    <button onclick="gameEngine.closeModal(); gameEngine.attemptAvoidEncounter('${enemyName}')">
+                        Try to Avoid
+                    </button>
+                </div>
+            </div>
+        `;
+
+        this.showModal('Random Encounter', encounterHTML);
+    }
+
+    // Attempt to avoid encounter
+    attemptAvoidEncounter(enemyName) {
+        const avoidRoll = this.rollDice(20) + window.gameCharacter.getAttributeModifier('dexterity');
+        
+        if (avoidRoll >= 12) {
+            this.showMessage('You successfully avoid the encounter and slip away quietly.');
+        } else {
+            this.showMessage('You failed to avoid the encounter! Combat begins!');
+            setTimeout(() => {
+                this.startCombat(enemyName);
+            }, 2000);
+        }
+    }
+
+    // Handle location-specific actions
+    handleLocationAction(actionId) {
+        if (window.isPaused && window.isPaused()) return;
+        
+        console.log(`Handling action: ${actionId}`);
+        if (window.audioManager) {
+            window.audioManager.playSFX('click');
+        }
+        
+        // This can be expanded based on specific actions
+        switch (actionId) {
+            case 'rest':
+                this.restAtLocation();
+                break;
+            case 'search':
+                this.searchLocation();
+                break;
+            default:
+                this.showMessage(`You ${actionId}.`);
+        }
+    }
+
+    // Interact with an NPC
+    interactWithNPC(npcName) {
+        console.log(`Interacting with NPC: ${npcName}`);
+        if (window.audioManager) {
+            window.audioManager.playSFX('click');
+        }
+        
+        const npcData = window.dataManager.getNPC(npcName);
+        if (npcData) {
+            this.showModal(`Talking to ${npcName}`, npcData.dialogue || `${npcName} greets you.`);
+        } else {
+            this.showMessage(`You approach ${npcName}.`);
+        }
+    }
+
+    // Enter a shop
+    enterShop(shopName) {
+        console.log(`Entering shop: ${shopName}`);
+        if (window.audioManager) {
+            window.audioManager.playSFX('click');
+        }
+        
+        const shopData = window.dataManager.getShop(shopName);
+        if (shopData) {
+            // Play shop music and voice line
+            if (window.audioManager) {
+                window.audioManager.playMusic('blacksmith');
+                if (shopData.keeper) {
+                    window.audioManager.playVoiceLine(shopData.keeper, 'greeting');
+                }
+            }
+            
+            this.showShopInterface(shopName, shopData);
+        } else {
+            this.showMessage(`The ${shopName} appears to be closed.`);
+        }
+    }
+
+    // Show shop interface
+    showShopInterface(shopName, shopData) {
+        let shopHTML = `
+            <div class="shop-interface">
+                <h3>${shopData.name || shopName}</h3>
+                <p><em>"${shopData.greeting || 'Welcome to my shop!'}"</em></p>
+                <p><strong>Your Gold:</strong> ${window.gameCharacter.gold}</p>
+                <hr>
+                <div class="shop-items">
+        `;
+
+        if (shopData.inventory) {
+            shopData.inventory.forEach(itemName => {
+                const itemData = window.dataManager.getItem(itemName);
+                if (itemData) {
+                    shopHTML += `
+                        <div class="shop-item">
+                            <div class="item-info">
+                                <strong>${itemData.name || itemName}</strong>
+                                <p>${itemData.description || 'No description available.'}</p>
+                                <p class="item-price">Price: ${itemData.cost || 10} gold</p>
+                            </div>
+                            <button onclick="gameEngine.buyItem('${itemName}', ${itemData.cost || 10})" 
+                                    ${!window.gameCharacter.canAfford(itemData.cost || 10) ? 'disabled' : ''}>
+                                Buy
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+        } else {
+            shopHTML += '<p>This shop has no items available.</p>';
+        }
+
+        shopHTML += `
+                </div>
+                <hr>
+                <button onclick="gameEngine.leaveShop()">Leave Shop</button>
+            </div>
+        `;
+
+        this.showModal(shopData.name || shopName, shopHTML);
+    }
+
+    // Buy an item from shop
+    buyItem(itemName, cost) {
+        if (window.gameCharacter.spendGold(cost)) {
+            window.gameCharacter.addItem(itemName);
+            if (window.audioManager) {
+                window.audioManager.playSFX('purchase');
+            }
+            
+            // Play voice line for purchase
+            const currentShop = this.getCurrentShopData();
+            if (currentShop && currentShop.keeper && window.audioManager) {
+                window.audioManager.playVoiceLine(currentShop.keeper, 'purchase');
+            }
+            
+            this.showMessage(`You bought ${itemName} for ${cost} gold.`);
+            this.updateCharacterDisplay();
+            
+            // Refresh shop display with updated gold
+            setTimeout(() => {
+                const currentShopName = this.getCurrentShopName();
+                if (currentShopName) {
+                    const shopData = window.dataManager.getShop(currentShopName);
+                    this.showShopInterface(currentShopName, shopData);
+                }
+            }, 1000);
+        } else {
+            this.showMessage("You don't have enough gold for that item.");
+        }
+    }
+
+    // Leave shop
+    leaveShop() {
+        if (window.audioManager) {
+            window.audioManager.playMusic('traveling');
+        }
+        
+        // Play goodbye voice line
+        const currentShop = this.getCurrentShopData();
+        if (currentShop && currentShop.keeper && window.audioManager) {
+            window.audioManager.playVoiceLine(currentShop.keeper, 'goodbye');
+        }
+        
+        this.closeModal();
+    }
+
+    // Get current shop data (helper method)
+    getCurrentShopData() {
+        const modalTitle = document.getElementById('modal-title');
+        if (modalTitle) {
+            return window.dataManager.getShop(modalTitle.textContent);
+        }
+        return null;
+    }
+
+    // Get current shop name (helper method)
+    getCurrentShopName() {
+        const modalTitle = document.getElementById('modal-title');
+        return modalTitle ? modalTitle.textContent : null;
+    }
+
+    // Rest at location
+    restAtLocation() {
+        window.gameCharacter.heal(window.gameCharacter.maxHealth);
+        this.showMessage('You rest and recover your health.');
+        this.updateCharacterDisplay();
+    }
+
+    // Search location
+    searchLocation() {
+        // Simple search - could be expanded
+        const findGold = Math.floor(Math.random() * 10) + 1;
+        window.gameCharacter.addGold(findGold);
+        this.showMessage(`You search the area and find ${findGold} gold pieces.`);
+        this.updateCharacterDisplay();
+    }
+
+    // Play location-specific music
+    playLocationMusic(locationName) {
+        if (!window.audioManager) return;
+        
+        switch (locationName.toLowerCase()) {
+            case 'tavern':
+                window.audioManager.playMusic('tavern');
+                break;
+            case 'blacksmith':
+                window.audioManager.playMusic('blacksmith');
+                break;
+            default:
+                window.audioManager.playMusic('traveling');
+        }
+    }
+
+    // Update character display panel
+    updateCharacterDisplay() {
+        if (!window.gameCharacter) return;
+
+        const nameDisplay = document.getElementById('character-name-display');
+        const levelDisplay = document.getElementById('char-level');
+        const healthDisplay = document.getElementById('char-health');
+        const maxHealthDisplay = document.getElementById('char-max-health');
+        const goldDisplay = document.getElementById('char-gold');
+        const locationDisplay = document.getElementById('char-location');
+
+        if (nameDisplay) nameDisplay.textContent = window.gameCharacter.name;
+        if (levelDisplay) levelDisplay.textContent = window.gameCharacter.level;
+        if (healthDisplay) healthDisplay.textContent = window.gameCharacter.health;
+        if (maxHealthDisplay) maxHealthDisplay.textContent = window.gameCharacter.maxHealth;
+        if (goldDisplay) goldDisplay.textContent = window.gameCharacter.gold;
+        if (locationDisplay) locationDisplay.textContent = window.gameCharacter.location;
+    }
+
+    // Switch between screens
+    switchScreen(screenId) {
+        // Hide all screens
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(screen => {
+            screen.classList.remove('active');
+        });
+
+        // Show target screen
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+            targetScreen.classList.add('screen-transition');
+        }
+    }
+
+    // Close modal dialog
+    closeModal() {
+        const modal = document.getElementById('modal-overlay');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+        
+        // If we were paused and no other modals are open, ensure pause menu is still visible
+        if (window.isPaused && window.isPaused() && !this.hasActiveModal()) {
+            const pauseOverlay = document.getElementById('pause-overlay');
+            if (pauseOverlay) {
+                pauseOverlay.classList.add('active');
+            }
+        }
+    }
+
+    // Check if any modal is currently active
+    hasActiveModal() {
+        const modal = document.getElementById('modal-overlay');
+        return modal && modal.classList.contains('active');
+    }
+
+    // Show modal dialog (updated to handle pause state)
+    showModal(title, content, wide = false) {
+        const modal = document.getElementById('modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalContent = modal.querySelector('.modal-content');
+
+        if (modal && modalTitle && modalBody) {
+            modalTitle.textContent = title;
+            modalBody.innerHTML = content;
+            
+            // Add or remove wide class
+            if (wide) {
+                modalContent.classList.add('wide');
+            } else {
+                modalContent.classList.remove('wide');
+            }
+            
+            modal.classList.add('active');
+            
+            // If game is paused, hide pause menu temporarily
+            if (window.isPaused && window.isPaused()) {
+                const pauseOverlay = document.getElementById('pause-overlay');
+                if (pauseOverlay) {
+                    pauseOverlay.classList.remove('active');
+                }
+            }
+        }
+    }
+
+    // Show temporary message
+    showMessage(message, duration = 3000) {
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(139, 69, 19, 0.9);
+            color: #e8d5b7;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #d4af37;
+            z-index: 9999;
+            font-family: 'Cinzel', serif;
+            max-width: 300px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        `;
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+            messageDiv.remove();
+        }, duration);
+    }
+
+    // Start combat with an enemy
+    startCombat(enemyName) {
+        const enemyData = window.dataManager.getEnemy(enemyName);
+        if (!enemyData) {
+            console.error(`Enemy '${enemyName}' not found`);
+            return;
+        }
+
+        // Create enemy instance
+        const enemy = {
+            name: enemyData.name,
+            level: enemyData.level,
+            health: enemyData.health,
+            maxHealth: enemyData.health,
+            ac: enemyData.ac,
+            attackBonus: enemyData.attack_bonus,
+            damage: enemyData.damage,
+            gold: enemyData.gold
+        };
+
+        // Start battle music
+        if (window.audioManager) {
+            window.audioManager.playMusic('battle');
+        }
+        
+        this.showCombatInterface(enemy);
+    }
+
+    // Show combat interface
+    showCombatInterface(enemy) {
+        const combatHTML = `
+            <div class="combat-interface">
+                <div class="combat-header">
+                    <h2>Combat: ${enemy.name}</h2>
+                </div>
+                
+                <div class="combat-status">
+                    <div class="player-status">
+                        <h3>${window.gameCharacter.name}</h3>
+                        <div class="health-bar">
+                            <span>Health: ${window.gameCharacter.health}/${window.gameCharacter.maxHealth}</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${(window.gameCharacter.health / window.gameCharacter.maxHealth) * 100}%"></div>
+                            </div>
+                        </div>
+                        <p>AC: ${window.gameCharacter.getArmorClass()}</p>
+                    </div>
+                    
+                    <div class="enemy-status">
+                        <h3>${enemy.name}</h3>
+                        <div class="health-bar">
+                            <span>Health: ${enemy.health}/${enemy.maxHealth}</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill enemy-health" style="width: ${(enemy.health / enemy.maxHealth) * 100}%"></div>
+                            </div>
+                        </div>
+                        <p>AC: ${enemy.ac}</p>
+                    </div>
+                </div>
+                
+                <div class="combat-log" id="combat-log">
+                    <p><strong>Combat begins!</strong></p>
+                </div>
+                
+                <div class="combat-actions">
+                    <button onclick="gameEngine.performCombatAction('attack')" class="combat-btn">Attack</button>
+                    <button onclick="gameEngine.performCombatAction('ability')" class="combat-btn">Use Ability</button>
+                    <button onclick="gameEngine.performCombatAction('item')" class="combat-btn">Use Item</button>
+                    <button onclick="gameEngine.performCombatAction('flee')" class="combat-btn">Flee</button>
+                </div>
+            </div>
+        `;
+
+        this.showModal('Combat', combatHTML);
+        this.currentEnemy = enemy;
+    }
+
+    // Perform combat action
+    performCombatAction(action) {
+        if (!this.currentEnemy || this.currentEnemy.health <= 0) return;
+
+        const player = window.gameCharacter;
+        const enemy = this.currentEnemy;
+        
+        switch (action) {
+            case 'attack':
+                this.playerAttack(player, enemy);
+                break;
+            case 'ability':
+                this.useAbility(player, enemy);
+                break;
+            case 'item':
+                this.useCombatItem(player, enemy);
+                break;
+            case 'flee':
+                this.attemptFlee(player, enemy);
+                break;
+        }
+
+        // Check if enemy is defeated
+        if (enemy.health <= 0) {
+            this.enemyDefeated(player, enemy);
+            return;
+        }
+
+        // Enemy turn
+        setTimeout(() => {
+            this.enemyTurn(enemy, player);
+            
+            // Check if player is defeated
+            if (player.health <= 0) {
+                this.playerDefeated(player);
+            }
+        }, 1000);
+    }
+
+    // Player attack
+    playerAttack(player, enemy) {
+        const attackRoll = this.rollDice(20) + player.getAttackBonus();
+        const log = document.getElementById('combat-log');
+        
+        log.innerHTML += `<p>You rolled ${attackRoll} vs AC ${enemy.ac}</p>`;
+
+        if (attackRoll >= enemy.ac) {
+            const damageInfo = player.getDamageRoll();
+            const damage = this.rollDamage(damageInfo.dice) + damageInfo.bonus;
+            enemy.health = Math.max(0, enemy.health - damage);
+            
+            log.innerHTML += `<p class="success">Hit! You deal ${damage} damage!</p>`;
+            if (window.audioManager) {
+                window.audioManager.playSFX('click');
+            }
+        } else {
+            log.innerHTML += `<p class="miss">Miss!</p>`;
+        }
+
+        this.updateCombatDisplay(enemy);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    // Use ability
+    useAbility(player, enemy) {
+        const abilities = this.getClassAbilities(player.characterClass);
+        if (abilities.length === 0) {
+            const log = document.getElementById('combat-log');
+            log.innerHTML += `<p>You have no abilities to use.</p>`;
+            log.scrollTop = log.scrollHeight;
+            return;
+        }
+
+        // For now, just use the first ability
+        const ability = abilities[0];
+        this.executeAbility(ability, player, enemy);
+    }
+
+    // Get class abilities
+    getClassAbilities(characterClass) {
+        const abilities = {
+            'Fighter': [{ name: 'Power Strike', damage: '2d6', bonus: 2 }],
+            'Rogue': [{ name: 'Sneak Attack', damage: '1d6', bonus: 4 }],
+            'Wizard': [{ name: 'Magic Missile', damage: '1d4+1', bonus: 0 }],
+            'Cleric': [{ name: 'Heal', type: 'heal', amount: '1d8+2' }],
+            'Ranger': [{ name: 'Multi-Shot', damage: '1d8', attacks: 2 }]
+        };
+        
+        return abilities[characterClass] || [];
+    }
+
+    // Execute ability
+    executeAbility(ability, player, enemy) {
+        const log = document.getElementById('combat-log');
+        
+        if (ability.type === 'heal') {
+            const healAmount = this.rollDamage(ability.amount);
+            player.heal(healAmount);
+            log.innerHTML += `<p class="success">You use ${ability.name} and heal ${healAmount} health!</p>`;
+            this.updateCharacterDisplay();
+        } else {
+            const attackRoll = this.rollDice(20) + player.getAttackBonus() + (ability.bonus || 0);
+            log.innerHTML += `<p>You use ${ability.name}! Attack roll: ${attackRoll} vs AC ${enemy.ac}</p>`;
+            
+            if (attackRoll >= enemy.ac) {
+                const damage = this.rollDamage(ability.damage) + player.getAttributeModifier('strength');
+                enemy.health = Math.max(0, enemy.health - damage);
+                log.innerHTML += `<p class="success">${ability.name} hits for ${damage} damage!</p>`;
+            } else {
+                log.innerHTML += `<p class="miss">${ability.name} misses!</p>`;
+            }
+        }
+        
+        this.updateCombatDisplay(enemy);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    // Use combat item
+    useCombatItem(player, enemy) {
+        const consumables = player.inventory.filter(item => {
+            const itemData = window.dataManager.getItem(item.name);
+            return itemData && itemData.type === 'consumable';
+        });
+
+        if (consumables.length === 0) {
+            const log = document.getElementById('combat-log');
+            log.innerHTML += `<p>You have no usable items.</p>`;
+            log.scrollTop = log.scrollHeight;
+            return;
+        }
+
+        // Use first available healing item
+        const healingItem = consumables.find(item => {
+            const itemData = window.dataManager.getItem(item.name);
+            return itemData && itemData.effect === 'heal';
+        });
+
+        if (healingItem) {
+            const result = player.useItem(healingItem.name);
+            const log = document.getElementById('combat-log');
+            log.innerHTML += `<p class="success">${result.message}</p>`;
+            this.updateCharacterDisplay();
+            this.updateCombatDisplay(enemy);
+            log.scrollTop = log.scrollHeight;
+        }
+    }
+
+    // Attempt to flee
+    attemptFlee(player, enemy) {
+        const fleeRoll = this.rollDice(20) + player.getAttributeModifier('dexterity');
+        const enemyRoll = this.rollDice(20) + enemy.level;
+        
+        const log = document.getElementById('combat-log');
+        
+        if (fleeRoll > enemyRoll) {
+            log.innerHTML += `<p class="success">You successfully flee from combat!</p>`;
+            setTimeout(() => {
+                this.closeModal();
+                if (window.audioManager) {
+                    window.audioManager.playMusic('traveling');
+                }
+                this.currentEnemy = null;
+            }, 2000);
+        } else {
+            log.innerHTML += `<p class="miss">Failed to flee!</p>`;
+        }
+        
+        log.scrollTop = log.scrollHeight;
+    }
+
+    // Enemy turn
+    enemyTurn(enemy, player) {
+        const attackRoll = this.rollDice(20) + enemy.attackBonus;
+        const playerAC = player.getArmorClass();
+        const log = document.getElementById('combat-log');
+        
+        log.innerHTML += `<p><strong>${enemy.name}'s turn:</strong></p>`;
+        log.innerHTML += `<p>${enemy.name} attacks with ${attackRoll} vs AC ${playerAC}</p>`;
+
+        if (attackRoll >= playerAC) {
+            const damage = this.rollDamage(enemy.damage);
+            player.takeDamage(damage);
+            log.innerHTML += `<p class="enemy-hit">${enemy.name} hits for ${damage} damage!</p>`;
+            this.updateCharacterDisplay();
+        } else {
+            log.innerHTML += `<p class="miss">${enemy.name} misses!</p>`;
+        }
+
+        log.scrollTop = log.scrollHeight;
+    }
+
+    // Enemy defeated
+    enemyDefeated(player, enemy) {
+        const expGained = enemy.level * 50;
+        const goldGained = enemy.gold;
+        
+        player.addExperience(expGained);
+        player.addGold(goldGained);
+        
+        const log = document.getElementById('combat-log');
+        log.innerHTML += `<p class="victory"><strong>Victory!</strong></p>`;
+        log.innerHTML += `<p class="victory">You gained ${expGained} experience and ${goldGained} gold!</p>`;
+        
+        this.updateCharacterDisplay();
+        
+        setTimeout(() => {
+            this.closeModal();
+            if (window.audioManager) {
+                window.audioManager.playMusic('traveling');
+            }
+            this.currentEnemy = null;
+            this.showMessage(`You defeated the ${enemy.name}!`);
+        }, 3000);
+    }
+
+    // Player defeated
+    playerDefeated(player) {
+        const log = document.getElementById('combat-log');
+        log.innerHTML += `<p class="defeat"><strong>You have been defeated!</strong></p>`;
+        
+        setTimeout(() => {
+            this.closeModal();
+            if (window.audioManager) {
+                window.audioManager.playMusic('gameOver');
+            }
+            this.currentEnemy = null;
+            
+            // Reset player to village with some health
+            player.health = Math.max(1, Math.floor(player.maxHealth / 2));
+            player.location = 'Village';
+            this.moveToLocation('Village');
+            this.updateCharacterDisplay();
+            
+            this.showMessage('You were defeated and wake up back in the village...');
+        }, 3000);
+    }
+
+    // Update combat display
+    updateCombatDisplay(enemy) {
+        const enemyHealthBar = document.querySelector('.enemy-health');
+        if (enemyHealthBar) {
+            const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+            enemyHealthBar.style.width = `${healthPercent}%`;
+        }
+        
+        const enemyStatus = document.querySelector('.enemy-status span');
+        if (enemyStatus) {
+            enemyStatus.textContent = `Health: ${enemy.health}/${enemy.maxHealth}`;
+        }
+    }
+
+    // Show Journal interface
+    showJournal(activeTab = 'quests') {
+        const journalHTML = `
+            <div class="journal-interface">
+                <div class="journal-tabs">
+                    <button class="journal-tab ${activeTab === 'rumors' ? 'active' : ''}" onclick="gameEngine.showJournal('rumors')">
+                        Rumors & News
+                    </button>
+                    <button class="journal-tab ${activeTab === 'quests' ? 'active' : ''}" onclick="gameEngine.showJournal('quests')">
+                        Quest Log
+                    </button>
+                </div>
+                
+                <div class="journal-content">
+                    ${activeTab === 'rumors' ? this.generateRumorsContent() : this.generateQuestsContent()}
+                </div>
+            </div>
+        `;
+
+        this.showModal('Personal Journal', journalHTML, true);
+    }
+
+    // Show Journal interface with specific item highlighted
+    showJournalWithHighlight(activeTab = 'rumors', highlightId = null) {
+        const journalHTML = `
+            <div class="journal-interface">
+                <div class="journal-tabs">
+                    <button class="journal-tab ${activeTab === 'rumors' ? 'active' : ''}" onclick="gameEngine.showJournal('rumors')">
+                        Rumors & News
+                    </button>
+                    <button class="journal-tab ${activeTab === 'quests' ? 'active' : ''}" onclick="gameEngine.showJournal('quests')">
+                        Quest Log
+                    </button>
+                </div>
+                
+                <div class="journal-content">
+                    ${activeTab === 'rumors' ? this.generateRumorsContent(highlightId) : this.generateQuestsContent(highlightId)}
+                </div>
+            </div>
+        `;
+
+        this.showModal('Personal Journal', journalHTML, true);
+    }
+
+    // Generate rumors content with optional highlighting
+    generateRumorsContent(highlightId = null) {
+        const discoveredRumors = this.journal.rumors.filter(rumor => rumor.discovered);
+        
+        if (discoveredRumors.length === 0) {
+            return `
+                <div style="text-align: center; padding: 2rem; color: #999;">
+                    <p>No rumors or news documented yet.</p>
+                    <p>Explore the world and talk to people to learn more.</p>
+                </div>
+            `;
+        }
+
+        let content = '<div class="rumors-list">';
+        
+        discoveredRumors.forEach(rumor => {
+            const isHighlighted = highlightId === rumor.id;
+            const highlightStyle = isHighlighted ? 'box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); border-left-color: #ffd700; transform: scale(1.02);' : '';
+            
+            content += `
+                <div class="rumor-entry" style="background: rgba(139, 69, 19, 0.3); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #d4af37; transition: all 0.3s ease; ${highlightStyle}">
+                    <h4 style="color: #d4af37; margin: 0 0 0.5rem 0;">${rumor.title}</h4>
+                    <p style="font-style: italic; color: #cd853f; margin: 0 0 1rem 0; font-size: 0.9rem;">Heard in: ${rumor.location}</p>
+                    <p style="margin: 0; line-height: 1.5;">${rumor.content}</p>
+                </div>
+            `;
+        });
+        
+        content += '</div>';
+        return content;
+    }
+
+    // Generate quests content with optional highlighting
+    generateQuestsContent(highlightId = null) {
+        if (!window.questManager) {
+            return `
+                <div style="text-align: center; padding: 2rem; color: #999;">
+                    <p>Quest system not initialized.</p>
+                </div>
+            `;
+        }
+
+        const activeQuests = window.questManager.getQuestsByStatus('active');
+        const availableQuests = window.questManager.getQuestsByStatus('available_to_complete');
+        const completedQuests = window.questManager.getQuestsByStatus('completed');
+
+        let content = '<div class="quests-list">';
+
+        // Search and filter bar
+        content += `
+            <div class="quest-search-container" style="margin-bottom: 1.5rem;">
+                <input type="text" id="quest-search" placeholder="Search quests..." 
+                       onkeyup="gameEngine.searchQuests(this.value)" 
+                       style="width: 100%; padding: 0.75rem; background: rgba(139, 69, 19, 0.3); border: 1px solid #8b4513; border-radius: 4px; color: #e8d5b7; font-family: 'Asul', serif;">
+            </div>
+        `;
+
+        // Quest filter tabs
+        content += `
+            <div class="quest-filter-tabs" style="margin-bottom: 1.5rem; border-bottom: 2px solid #8b4513; padding-bottom: 0.5rem;">
+                <button class="quest-filter-tab active" onclick="gameEngine.filterQuestDisplay('all')" style="background: rgba(212, 175, 55, 0.3); color: #d4af37; border: 1px solid #d4af37; padding: 0.5rem 1rem; margin-right: 0.5rem; border-radius: 4px;">
+                    All Quests
+                </button>
+                <button class="quest-filter-tab" onclick="gameEngine.filterQuestDisplay('active')" style="background: rgba(0, 100, 0, 0.2); color: #90ee90; border: 1px solid #90ee90; padding: 0.5rem 1rem; margin-right: 0.5rem; border-radius: 4px;">
+                    Active (${activeQuests.length})
+                </button>
+                <button class="quest-filter-tab" onclick="gameEngine.filterQuestDisplay('available')" style="background: rgba(255, 215, 0, 0.2); color: #ffd700; border: 1px solid #ffd700; padding: 0.5rem 1rem; margin-right: 0.5rem; border-radius: 4px;">
+                    Available (${availableQuests.length})
+                </button>
+                <button class="quest-filter-tab" onclick="gameEngine.filterQuestDisplay('completed')" style="background: rgba(128, 128, 128, 0.2); color: #c0c0c0; border: 1px solid #c0c0c0; padding: 0.5rem 1rem; border-radius: 4px;">
+                    Completed (${completedQuests.length})
+                </button>
+            </div>
+        `;
+
+        // Active quests section
+        if (activeQuests.length > 0) {
+            content += '<div class="quest-section active-quests">';
+            content += '<h3 style="color: #90ee90; margin: 1rem 0 0.5rem 0;">Active Quests</h3>';
+            
+            activeQuests.forEach(quest => {
+                content += this.generateQuestEntry(quest, 'active', highlightId);
+            });
+            content += '</div>';
+        }
+
+        // Available quests section
+        if (availableQuests.length > 0) {
+            content += '<div class="quest-section available-quests">';
+            content += '<h3 style="color: #ffd700; margin: 1rem 0 0.5rem 0;">Available to Complete</h3>';
+            
+            availableQuests.forEach(quest => {
+                content += this.generateQuestEntry(quest, 'available', highlightId);
+            });
+            content += '</div>';
+        }
+
+        // Completed quests section
+        if (completedQuests.length > 0) {
+            content += '<div class="quest-section completed-quests">';
+            content += '<h3 style="color: #c0c0c0; margin: 1rem 0 0.5rem 0;">Completed Quests</h3>';
+            
+            completedQuests.forEach(quest => {
+                content += this.generateQuestEntry(quest, 'completed', highlightId);
+            });
+            content += '</div>';
+        }
+
+        // No quests message
+        if (activeQuests.length === 0 && availableQuests.length === 0 && completedQuests.length === 0) {
+            content += `
+                <div style="text-align: center; padding: 2rem; color: #999;">
+                    <p>No quests in your journal yet.</p>
+                    <p>Visit towns and talk to NPCs to find new adventures.</p>
+                </div>
+            `;
+        }
+
+        content += '</div>';
+        return content;
+    }
+
+    // Generate a single quest entry
+    generateQuestEntry(quest, status, highlightId = null) {
+        const isHighlighted = highlightId === quest.questId;
+        const highlightStyle = isHighlighted ? 'box-shadow: 0 0 15px rgba(212, 175, 55, 0.7); transform: scale(1.02);' : '';
+        
+        let statusColor, statusBg, borderColor;
+        switch (status) {
+            case 'active':
+                statusColor = '#90ee90';
+                statusBg = 'rgba(0, 100, 0, 0.2)';
+                borderColor = '#228b22';
+                break;
+            case 'available':
+                statusColor = '#ffd700';
+                statusBg = 'rgba(255, 215, 0, 0.2)';
+                borderColor = '#daa520';
+                break;
+            case 'completed':
+                statusColor = '#c0c0c0';
+                statusBg = 'rgba(128, 128, 128, 0.2)';
+                borderColor = '#808080';
+                break;
+            default:
+                statusColor = '#90ee90';
+                statusBg = 'rgba(0, 100, 0, 0.2)';
+                borderColor = '#228b22';
+        }
+
+        let content = `
+            <div class="quest-entry quest-${status}" style="background: ${statusBg}; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid ${statusColor}; border: 1px solid ${borderColor}; transition: all 0.3s ease; ${highlightStyle}">
+                <div style="display: flex; justify-content: between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <h4 style="color: ${statusColor}; margin: 0; flex-grow: 1;">${quest.name}</h4>
+                    <span style="background: rgba(0,0,0,0.3); color: ${statusColor}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; text-transform: uppercase; font-weight: bold;">
+                        ${status === 'available' ? 'Available to Complete' : status}
+                    </span>
+                </div>
+                <p style="margin: 0 0 1rem 0; line-height: 1.5; color: #e0e0e0;">${quest.description}</p>
+        `;
+
+        // Current objective
+        if (status === 'active' && quest.playerProgress) {
+            const currentObj = quest.objectives.find(obj => obj.id === quest.playerProgress.currentObjective);
+            if (currentObj) {
+                content += `
+                    <div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <p style="margin: 0 0 0.5rem 0; color: #ffd700;"><strong>Current Objective:</strong></p>
+                        <p style="margin: 0; color: #fff;">${currentObj.description}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Progress bar
+        if (quest.objectives && quest.objectives.length > 0) {
+            const completed = quest.playerProgress ? quest.playerProgress.objectivesCompleted : 0;
+            const total = quest.objectives.length;
+            const progressPercent = (completed / total) * 100;
+
+            content += `
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span style="font-size: 0.9rem; color: #d4af37;">Progress</span>
+                        <span style="font-size: 0.9rem; color: #d4af37;">${completed}/${total}</span>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.5); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: ${statusColor}; height: 100%; width: ${progressPercent}%; transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Quest details
+        content += `
+            <div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 6px;">
+                <p style="margin: 0 0 0.5rem 0;"><strong>Quest Giver:</strong> ${quest.questGiver.name} (${quest.questGiver.location})</p>
+                <p style="margin: 0 0 0.5rem 0;"><strong>Difficulty:</strong> ${quest.difficulty.charAt(0).toUpperCase() + quest.difficulty.slice(1)}</p>
+                <p style="margin: 0 0 0.5rem 0;"><strong>Level:</strong> ${quest.level.minimum} - ${quest.level.recommended} (recommended)</p>
+        `;
+
+        // Quest tags
+        if (quest.tags && quest.tags.length > 0) {
+            content += '<p style="margin: 0 0 0.5rem 0;"><strong>Tags:</strong> ';
+            quest.tags.forEach((tag, index) => {
+                content += `<span onclick="gameEngine.filterQuestsByTag('${tag}')" style="background: rgba(212, 175, 55, 0.3); color: #d4af37; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.25rem; cursor: pointer; border: 1px solid #d4af37;" title="Filter by ${tag}">${tag}</span>`;
+            });
+            content += '</p>';
+        }
+
+        // Rewards
+        if (quest.rewards && quest.rewards.completion) {
+            const rewards = quest.rewards.completion;
+            let rewardText = [];
+            
+            if (rewards.experience) rewardText.push(`${rewards.experience} XP`);
+            if (rewards.gold) rewardText.push(`${rewards.gold} gold`);
+            if (rewards.items && rewards.items.length > 0) {
+                const itemRewards = rewards.items.map(itemId => this.getItemDisplayText(itemId)).join(', ');
+                rewardText.push(`Items: ${itemRewards}`);
+            }
+
+            content += `<p style="margin: 0; color: #ffd700;"><strong>Rewards:</strong> ${rewardText.join(', ')}</p>`;
+        }
+
+        content += '</div>';
+
+        // Action buttons
+        if (status === 'available') {
+            content += `
+                <div style="margin-top: 1rem; text-align: right;">
+                    <button onclick="gameEngine.completeQuest('${quest.questId}')" style="background: #ffd700; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                        Complete Quest
+                    </button>
+                </div>
+            `;
+        }
+
+        content += '</div>';
+        return content;
+    }
+
+    // Show specific rumor in journal
+    showRumor(rumorId) {
+        this.showJournalWithHighlight('rumors', rumorId);
+    }
+
+    // Show specific quest in journal
+    showQuest(questId) {
+        this.showJournalWithHighlight('quests', questId);
+    }
+
+    // Filter quests by status (for the journal interface)
+    filterQuests(status) {
+        // This would update the UI to show only quests of the specified status
+        // For now, we'll just refresh the journal
+        this.showJournal('quests');
+    }
+
+    // Filter quests in the journal interface
+    filterQuestDisplay(status) {
+        const questEntries = document.querySelectorAll('.quest-entry');
+        const filterTabs = document.querySelectorAll('.quest-filter-tab');
+        
+        // Update active tab
+        filterTabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.textContent.toLowerCase().includes(status) || 
+                (status === 'all' && tab.textContent.includes('All'))) {
+                tab.classList.add('active');
+            }
+        });
+        
+        // Show/hide quest entries
+        questEntries.forEach(entry => {
+            if (status === 'all') {
+                entry.style.display = 'block';
+            } else {
+                const hasClass = entry.classList.contains(`quest-${status}`);
+                entry.style.display = hasClass ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Search quests by name or description
+    searchQuests(searchTerm) {
+        const questEntries = document.querySelectorAll('.quest-entry');
+        const term = searchTerm.toLowerCase();
+        
+        questEntries.forEach(entry => {
+            const questName = entry.querySelector('h4').textContent.toLowerCase();
+            const questDesc = entry.querySelector('p').textContent.toLowerCase();
+            
+            if (questName.includes(term) || questDesc.includes(term)) {
+                entry.style.display = 'block';
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+    }
+
+    // Filter quests by tag
+    filterQuestsByTag(tag) {
+        // Clear search
+        const searchInput = document.getElementById('quest-search');
+        if (searchInput) searchInput.value = '';
+        
+        // Show message about tag filter
+        this.showMessage(`Filtering quests by tag: ${tag}`);
+        
+        // For now, just refresh with a tag parameter
+        // In a more advanced implementation, we'd filter the display
+        this.showJournal('quests');
+    }
+
+    // Get formatted item display text with rarity coloring
+    getItemDisplayText(itemId) {
+        const itemData = window.dataManager?.getItem?.(itemId);
+        if (!itemData) {
+            return itemId; // Fallback to raw ID
+        }
+        
+        const rarityColors = {
+            'common': '#ffffff',
+            'uncommon': '#90ee90',
+            'rare': '#4169e1',
+            'epic': '#9932cc',
+            'legendary': '#ffd700'
+        };
+        
+        const color = rarityColors[itemData.rarity] || '#ffffff';
+        return `<span style="color: ${color}; font-weight: bold;">${itemData.name}</span>`;
+    }
+
+    // Show settings (placeholder)
+    showSettings() {
+        this.showModal('Settings', `
+            <div class="settings-panel">
+                <h4>Audio Settings</h4>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <label>Music:</label>
+                    <button onclick="toggleMusic()" id="settings-music-toggle" style="background: linear-gradient(45deg, #654321, #8b4513); color: #e8d5b7; border: 1px solid #a0522d; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ${window.audioManager && window.audioManager.isMusicEnabled ? window.audioManager.isMusicEnabled() ? 'ON' : 'OFF' : 'ON'}
+                    </button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <label>Sound Effects:</label>
+                    <button onclick="toggleSFX()" id="settings-sfx-toggle" style="background: linear-gradient(45deg, #654321, #8b4513); color: #e8d5b7; border: 1px solid #a0522d; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ${window.audioManager && window.audioManager.isSFXEnabled ? window.audioManager.isSFXEnabled() ? 'ON' : 'OFF' : 'ON'}
+                    </button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <label>Volume:</label>
+                    <input type="range" min="0" max="100" value="${window.audioManager ? window.audioManager.volume * 100 : 50}" 
+                           onchange="setVolume(this.value)" style="width: 150px;">
+                </div>
+            </div>
+        `);
+    }
+
+    // Exit game
+    exitGame() {
+        if (confirm('Are you sure you want to exit the game?')) {
+            window.close();
+        }
+    }
+
+    // Show error message
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #8b0000, #a00000);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ff0000;
+            z-index: 10000;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            max-width: 400px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        `;
+        errorDiv.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; color: #ffcccc;">Error</h3>
+            <p style="margin: 0 0 15px 0;">${message}</p>
+            <button onclick="this.parentElement.remove()" style=""
+                background: #660000;
+                color: white;
+                border: 1px solid #ff0000;
+                padding: 8px 16px;
+                cursor: pointer;
+                border-radius: 4px;
+                font-family: 'Cinzel', serif;
+            ">OK</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+
+    // Roll dice utility
+    rollDice(sides) {
+        return Math.floor(Math.random() * sides) + 1;
+    }
+
+    // Roll damage from dice notation
+    rollDamage(damageString) {
+        if (!damageString) return 1;
+        
+        const match = damageString.match(/(\d*)d(\d+)([\+\-]\d+)?/);
+        if (!match) return 1;
+        
+        const numDice = parseInt(match[1]) || 1;
+        const dieSize = parseInt(match[2]);
+        const modifier = parseInt(match[3]) || 0;
+        
+        let total = 0;
+        for (let i = 0; i < numDice; i++) {
+            total += this.rollDice(dieSize);
+        }
+        
+        return total + modifier;
+    }
+}
+
+// Create global game engine instance
+window.gameEngine = new GameEngine();
+
+// Global functions for HTML onclick handlers
+function startNewGame() {
+    window.gameEngine.startNewGame();
+}
+
+function loadGame() {
+    window.gameEngine.loadGame();
+}
+
+function showChangelog() {
+    window.gameEngine.showChangelog();
+}
+
+function showSettings() {
+    window.gameEngine.showSettings();
+}
+
+function exitGame() {
+    window.gameEngine.exitGame();
+}
+
+function createCharacter() {
+    window.gameEngine.createCharacter();
+}
+
+function showTitleScreen() {
+    window.gameEngine.showTitleScreen();
+}
+
+function closeModal() {
+    window.gameEngine.closeModal();
+}
+
+// Additional global functions for HTML interactions
+function rollAttributes() {
+    if (window.gameEngine) {
+        window.gameEngine.rollAttributes();
+    }
+}
+
+function toggleMusic() {
+    if (window.audioManager) {
+        const musicBtn = document.getElementById('music-toggle');
+        const isPlaying = window.audioManager.toggleMusic();
+        if (musicBtn) {
+            musicBtn.textContent = isPlaying ? 'Music: ON' : 'Music: OFF';
+        }
+    }
+}
+
+function toggleSFX() {
+    if (window.audioManager) {
+        const sfxBtn = document.getElementById('sfx-toggle');
+        const isEnabled = window.audioManager.toggleSFX();
+        if (sfxBtn) {
+            sfxBtn.textContent = isEnabled ? 'SFX: ON' : 'SFX: OFF';
+        }
+    }
+}
+
+function setVolume(value) {
+    if (window.audioManager) {
+        window.audioManager.setMasterVolume(value / 100);
+    }
+}
+
+function showCharacterSheet() {
+    if (window.gameCharacter) {
+        const summary = window.gameCharacter.getSummary();
+        const sheetHTML = `
+            <div class="character-sheet">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="margin: 0; color: #d4af37;">${summary.name}</h3>
+                        <p style="margin: 0; color: #ddd; font-style: italic;">Level ${summary.level} ${summary.race} ${summary.characterClass}</p>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <h4 style="color: #d4af37; margin-bottom: 1rem;">Basic Information</h4>
+                        <p><strong>Race:</strong> ${summary.race}</p>
+                        <p><strong>Class:</strong> ${summary.characterClass}</p>
+                        <p><strong>Background:</strong> ${summary.background}</p>
+                        <p><strong>Level:</strong> ${summary.level}</p>
+                        <p><strong>Health:</strong> ${ summary.health}/${summary.maxHealth}</p>
+                        <p><strong>Gold:</strong> ${summary.gold}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: #d4af37; margin-bottom: 1rem;">Attributes</h4>
+                        ${Object.entries(summary.attributes).map(([attr, value]) => {
+                            const modifier = Math.floor((value - 10) / 2);
+                            const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+                            return `<p><strong>${attr.charAt(0).toUpperCase() + attr.slice(1)}:</strong> ${value} (${modStr})</p>`;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div style="background: rgba(139, 69, 19, 0.3); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                    <h4 style="color: #d4af37; margin: 0 0 1rem 0;">Equipment & Inventory</h4>
+                    <p style="margin: 0.5rem 0;">Weapon: Starting equipment based on class</p>
+                    <p style="margin: 0.5rem 0;">Armor: Basic clothing/leather armor</p>
+                    <p style="margin: 0.5rem 0;">Inventory: ${window.gameCharacter.inventory.length > 0 ? window.gameCharacter.inventory.length + ' items' : 'Empty'}</p>
+                </div>
+                
+                <div style="background: rgba(0, 100, 0, 0.2); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #228b22;">
+                    <h4 style="color: #90ee90; margin: 0 0 1rem 0;">Character Progress</h4>
+                    <p style="margin: 0.5rem 0;">Experience: 0 / 100 XP to next level</p>
+                    <p style="margin: 0.5rem 0;">Quests Completed: 0</p>
+                    <p style="margin: 0.5rem 0;">Monsters Defeated: 0</p>
+                    <p style="margin: 0.5rem 0;">Exploration: 5% of the realm discovered</p>
+                </div>
+            </div>
+        `;
+        window.gameEngine.showModal('Character Sheet', sheetHTML, true);
+    }
+}
+
+function showInventory() {
+    if (window.gameCharacter) {
+        let inventoryHTML = '<div class="inventory-display">';
+        
+        if (window.gameCharacter.inventory.length === 0) {
+            inventoryHTML += `
+                <div style="text-align: center; padding: 2rem;">
+                    <h3 style="color: #d4af37;">Your Pack is Empty</h3>
+                    <p style="color: #ddd; margin: 1rem 0;">You haven't collected any items yet. Explore the world, complete quests, and visit merchants to fill your inventory!</p>
+                </div>
+            `;
+        } else {
+            inventoryHTML += `
+                <div style="margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="margin: 0; color: #d4af37;">Your Inventory</h3>
+                            <p style="margin: 0; color: #ddd; font-style: italic;">${window.gameCharacter.inventory.length} items</p>
+                        </div>
+                    </div>
+                    <div class="inventory-items" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            `;
+            window.gameCharacter.inventory.forEach((item, index) => {
+                inventoryHTML += `
+        // Quest tags
+        if (quest.tags && quest.tags.length > 0) {
+            content += '<p style="margin: 0 0 0.5rem 0;"><strong>Tags:</strong> ';
+            quest.tags.forEach((tag, index) => {
+                content += `<span onclick="gameEngine.filterQuestsByTag('${tag}')" style="background: rgba(212, 175, 55, 0.3); color: #d4af37; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.25rem; cursor: pointer; border: 1px solid #d4af37;" title="Filter by ${tag}">${tag}</span>`;
+            });
+            content += '</p>';
+        }
+
+        // Rewards
+        if (quest.rewards && quest.rewards.completion) {
+            const rewards = quest.rewards.completion;
+            let rewardText = [];
+            
+            if (rewards.experience) rewardText.push(`${rewards.experience} XP`);
+            if (rewards.gold) rewardText.push(`${rewards.gold} gold`);
+            if (rewards.items && rewards.items.length > 0) {
+                const itemRewards = rewards.items.map(itemId => this.getItemDisplayText(itemId)).join(', ');
+                rewardText.push(`Items: ${itemRewards}`);
+            }
+
+            content += `<p style="margin: 0; color: #ffd700;"><strong>Rewards:</strong> ${rewardText.join(', ')}</p>`;
+        }
+
+        content += '</div>';
+
+        // Action buttons
+        if (status === 'available') {
+            content += `
+                <div style="margin-top: 1rem; text-align: right;">
+                    <button onclick="gameEngine.completeQuest('${quest.questId}')" style="background: #ffd700; color: #000; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                        Complete Quest
+                    </button>
+                </div>
+            `;
+        }
+
+        content += '</div>';
+        return content;
+    }
+
+    // Show specific rumor in journal
+    showRumor(rumorId) {
+        this.showJournalWithHighlight('rumors', rumorId);
+    }
+
+    // Show specific quest in journal
+    showQuest(questId) {
+        this.showJournalWithHighlight('quests', questId);
+    }
+
+    // Filter quests by status (for the journal interface)
+    filterQuests(status) {
+        // This would update the UI to show only quests of the specified status
+        // For now, we'll just refresh the journal
+        this.showJournal('quests');
+    }
+
+    // Filter quests in the journal interface
+    filterQuestDisplay(status) {
+        const questEntries = document.querySelectorAll('.quest-entry');
+        const filterTabs = document.querySelectorAll('.quest-filter-tab');
+        
+        // Update active tab
+        filterTabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.textContent.toLowerCase().includes(status) || 
+                (status === 'all' && tab.textContent.includes('All'))) {
+                tab.classList.add('active');
+            }
+        });
+        
+        // Show/hide quest entries
+        questEntries.forEach(entry => {
+            if (status === 'all') {
+                entry.style.display = 'block';
+            } else {
+                const hasClass = entry.classList.contains(`quest-${status}`);
+                entry.style.display = hasClass ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Search quests by name or description
+    searchQuests(searchTerm) {
+        const questEntries = document.querySelectorAll('.quest-entry');
+        const term = searchTerm.toLowerCase();
+        
+        questEntries.forEach(entry => {
+            const questName = entry.querySelector('h4').textContent.toLowerCase();
+            const questDesc = entry.querySelector('p').textContent.toLowerCase();
+            
+            if (questName.includes(term) || questDesc.includes(term)) {
+                entry.style.display = 'block';
+            } else {
+                entry.style.display = 'none';
+            }
+        });
+    }
+
+    // Filter quests by tag
+    filterQuestsByTag(tag) {
+        // Clear search
+        const searchInput = document.getElementById('quest-search');
+        if (searchInput) searchInput.value = '';
+        
+        // Show message about tag filter
+        this.showMessage(`Filtering quests by tag: ${tag}`);
+        
+        // For now, just refresh with a tag parameter
+        // In a more advanced implementation, we'd filter the display
+        this.showJournal('quests');
+    }
+
+    // Get formatted item display text with rarity coloring
+    getItemDisplayText(itemId) {
+        const itemData = window.dataManager?.getItem?.(itemId);
+        if (!itemData) {
+            return itemId; // Fallback to raw ID
+        }
+        
+        const rarityColors = {
+            'common': '#ffffff',
+            'uncommon': '#90ee90',
+            'rare': '#4169e1',
+            'epic': '#9932cc',
+            'legendary': '#ffd700'
+        };
+        
+        const color = rarityColors[itemData.rarity] || '#ffffff';
+        return `<span style="color: ${color}; font-weight: bold;">${itemData.name}</span>`;
+    }
+
+    // Show settings (placeholder)
+    showSettings() {
+        this.showModal('Settings', `
+            <div class="settings-panel">
+                <h4>Audio Settings</h4>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <label>Music:</label>
+                    <button onclick="toggleMusic()" id="settings-music-toggle" style="background: linear-gradient(45deg, #654321, #8b4513); color: #e8d5b7; border: 1px solid #a0522d; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ${window.audioManager && window.audioManager.isMusicEnabled ? window.audioManager.isMusicEnabled() ? 'ON' : 'OFF' : 'ON'}
+                    </button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <label>Sound Effects:</label>
+                    <button onclick="toggleSFX()" id="settings-sfx-toggle" style="background: linear-gradient(45deg, #654321, #8b4513); color: #e8d5b7; border: 1px solid #a0522d; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ${window.audioManager && window.audioManager.isSFXEnabled ? window.audioManager.isSFXEnabled() ? 'ON' : 'OFF' : 'ON'}
+                    </button>
+                </div>
+                <div class="setting-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                    <label>Volume:</label>
+                    <input type="range" min="0" max="100" value="${window.audioManager ? window.audioManager.volume * 100 : 50}" 
+                           onchange="setVolume(this.value)" style="width: 150px;">
+                </div>
+            </div>
+        `);
+    }
+
+    // Exit game
+    exitGame() {
+        if (confirm('Are you sure you want to exit the game?')) {
+            window.close();
+        }
+    }
+
+    // Show error message
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #8b0000, #a00000);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ff0000;
+            z-index: 10000;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            max-width: 400px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+        `;
+        errorDiv.innerHTML = `
+            <h3 style="margin: 0 0 10px 0; color: #ffcccc;">Error</h3>
+            <p style="margin: 0 0 15px 0;">${message}</p>
+            <button onclick="this.parentElement.remove()" style=""
+                background: #660000;
+                color: white;
+                border: 1px solid #ff0000;
+                padding: 8px 16px;
+                cursor: pointer;
+                border-radius: 4px;
+                font-family: 'Cinzel', serif;
+            ">OK</button>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+
+    // Roll dice utility
+    rollDice(sides) {
+        return Math.floor(Math.random() * sides) + 1;
+    }
+
+    // Roll damage from dice notation
+    rollDamage(damageString) {
+        if (!damageString) return 1;
+        
+        const match = damageString.match(/(\d*)d(\d+)([\+\-]\d+)?/);
+        if (!match) return 1;
+        
+        const numDice = parseInt(match[1]) || 1;
+        const dieSize = parseInt(match[2]);
+        const modifier = parseInt(match[3]) || 0;
+        
+        let total = 0;
+        for (let i = 0; i < numDice; i++) {
+            total += this.rollDice(dieSize);
+        }
+        
+        return total + modifier;
+    }
+}
+
+// Create global game engine instance
+window.gameEngine = new GameEngine();
+
+// Global functions for HTML onclick handlers
+function startNewGame() {
+    window.gameEngine.startNewGame();
+}
+
+function loadGame() {
+    window.gameEngine.loadGame();
+}
+
+function showChangelog() {
+    window.gameEngine.showChangelog();
+}
+
+function showSettings() {
+    window.gameEngine.showSettings();
+}
+
+function exitGame() {
+    window.gameEngine.exitGame();
+}
+
+function createCharacter() {
+    window.gameEngine.createCharacter();
+}
+
+function showTitleScreen() {
+    window.gameEngine.showTitleScreen();
+}
+
+function closeModal() {
+    window.gameEngine.closeModal();
+}
+
+// Additional global functions for HTML interactions
+function rollAttributes() {
+    if (window.gameEngine) {
+        window.gameEngine.rollAttributes();
+    }
+}
+
+function toggleMusic() {
+    if (window.audioManager) {
+        const musicBtn = document.getElementById('music-toggle');
+        const isPlaying = window.audioManager.toggleMusic();
+        if (musicBtn) {
+            musicBtn.textContent = isPlaying ? 'Music: ON' : 'Music: OFF';
+        }
+    }
+}
+
+function toggleSFX() {
+    if (window.audioManager) {
+        const sfxBtn = document.getElementById('sfx-toggle');
+        const isEnabled = window.audioManager.toggleSFX();
+        if (sfxBtn) {
+            sfxBtn.textContent = isEnabled ? 'SFX: ON' : 'SFX: OFF';
+        }
+    }
+}
+
+function setVolume(value) {
+    if (window.audioManager) {
+        window.audioManager.setMasterVolume(value / 100);
+    }
+}
+
+function showCharacterSheet() {
+    if (window.gameCharacter) {
+        const summary = window.gameCharacter.getSummary();
+        const sheetHTML = `
+            <div class="character-sheet">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 style="margin: 0; color: #d4af37;">${summary.name}</h3>
+                        <p style="margin: 0; color: #ddd; font-style: italic;">Level ${summary.level} ${summary.race} ${summary.characterClass}</p>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <h4 style="color: #d4af37; margin-bottom: 1rem;">Basic Information</h4>
+                        <p><strong>Race:</strong> ${summary.race}</p>
+                        <p><strong>Class:</strong> ${summary.characterClass}</p>
+                        <p><strong>Background:</strong> ${summary.background}</p>
+                        <p><strong>Level:</strong> ${summary.level}</p>
+                        <p><strong>Health:</strong> ${ summary.health}/${summary.maxHealth}</p>
+                        <p><strong>Gold:</strong> ${summary.gold}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: #d4af37; margin-bottom: 1rem;">Attributes</h4>
+                        ${Object.entries(summary.attributes).map(([attr, value]) => {
+                            const modifier = Math.floor((value - 10) / 2);
+                            const modStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+                            return `<p><strong>${attr.charAt(0).toUpperCase() + attr.slice(1)}:</strong> ${value} (${modStr})</p>`;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div style="background: rgba(139, 69, 19, 0.3); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                    <h4 style="color: #d4af37; margin: 0 0 1rem 0;">Equipment & Inventory</h4>
+                    <p style="margin: 0.5rem 0;">Weapon: Starting equipment based on class</p>
+                    <p style="margin: 0.5rem 0;">Armor: Basic clothing/leather armor</p>
+                    <p style="margin: 0.5rem 0;">Inventory: ${window.gameCharacter.inventory.length > 0 ? window.gameCharacter.inventory.length + ' items' : 'Empty'}</p>
+                </div>
+                
+                <div style="background: rgba(0, 100, 0, 0.2); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #228b22;">
+                    <h4 style="color: #90ee90; margin: 0 0 1rem 0;">Character Progress</h4>
+                    <p style="margin: 0.5rem 0;">Experience: 0 / 100 XP to next level</p>
+                    <p style="margin: 0.5rem 0;">Quests Completed: 0</p>
+                    <p style="margin: 0.5rem 0;">Monsters Defeated: 0</p>
+                    <p style="margin: 0.5rem 0;">Exploration: 5% of the realm discovered</p>
+                </div>
+            </div>
+        `;
+        window.gameEngine.showModal('Character Sheet', sheetHTML, true);
+    }
+}
+
+function showInventory() {
+    if (window.gameCharacter) {
+        let inventoryHTML = '<div class="inventory-display">';
+        
+        if (window.gameCharacter.inventory.length === 0) {
+            inventoryHTML += `
+                <div style="text-align: center; padding: 2rem;">
+                    <h3 style="color: #d4af37;">Your Pack is Empty</h3>
+                    <p style="color: #ddd; margin: 1rem 0;">You haven't collected any items yet. Explore the world, complete quests, and visit merchants to fill your inventory!</p>
+                </div>
+            `;
+        } else {
+            inventoryHTML += `
+                <div style="margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="margin: 0; color: #d4af37;">Your Inventory</h3>
+                            <p style="margin: 0; color: #ddd; font-style: italic;">${window.gameCharacter.inventory.length} items</p>
+                        </div>
+                    </div>
+                    <div class="inventory-items" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            `;
+            window.gameCharacter.inventory.forEach((item, index) => {
+                inventoryHTML += `
+                    <div class="inventory-item" style="background: rgba(139, 69, 19, 0.3); padding: 1rem; border-radius: 8px; border: 1px solid #8b4513;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <strong style="color: #d4af37;">${item.name}</strong>
+                            ${item.quantity > 1 ? `<span style="background: #d4af37; color: #000; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-right: 0.25rem; cursor: pointer; border: 1px solid #d4af37;" title="Filter by ${tag}">${tag}</span>` : ''}
+                        </div>
+                        <p style="margin: 0; color: #ddd; font-size: 0.9rem;">${item.description || 'A mysterious item from your adventures.'}</p>
+                        ${item.value ? `<p style="margin: 0.5rem 0 0 0; color: #ffd700; font-size: 0.8rem;">Value: ${item.value} gold</p>` : ''}
+                    </div>
+                `;
+            });
+            inventoryHTML += '</div></div>';
+        }
+        
+        // Add equipment section
+        inventoryHTML += `
+            <div style="background: rgba(0, 100, 0, 0.2); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #228b22;">
+                <h4 style="color: #90ee90; margin: 0 0 1rem 0;">Equipment</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <p style="margin: 0.5rem 0;"><strong>Weapon:</strong> Starting Weapon</p>
+                        <p style="margin: 0.5rem 0;"><strong>Armor:</strong> Basic Clothing</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0.5rem 0;"><strong>Shield:</strong> None</p>
+                        <p style="margin: 0.5rem 0;"><strong>Accessory:</strong> None</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        inventoryHTML += '</div>';
+        window.gameEngine.showModal('Inventory', inventoryHTML, true);
+    }
+}
+
+function saveGame() {
+    window.gameEngine.saveGame();
+}
+
+// Roll dice utility
+function rollDice(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+}
+
+// Roll damage from dice notation
+function rollDamage(damageString) {
+    if (!damageString) return 1;
+    
+    const match = damageString.match(/(\d*)d(\d+)([\+\-]\d+)?/);
+    if (!match) return 1;
+    
+    const numDice = parseInt(match[1]) || 1;
+    const dieSize = parseInt(match[2]);
+    const modifier = parseInt(match[3]) || 0;
+    
+    let total = 0;
+    for (let i = 0; i < numDice; i++) {
+        total += rollDice(dieSize);
+    }
+    
+    return total + modifier;
+}
+
+// Show error message
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(45deg, #8b0000, #a00000);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid #ff0000;
+        z-index: 10000;
+        text-align: center;
+        font-family: 'Cinzel', serif;
+        max-width: 400px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    `;
+    errorDiv.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; color: #ffcccc;">Error</h3>
+        <p style="margin: 0 0 15px 0;">${message}</p>
+        <button onclick="this.parentElement.remove()" style=""
+            background: #660000;
+            color: white;
+            border: 1px solid #ff0000;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Cinzel', serif;
+        ">OK</button>
+    `;
+    document.body.appendChild(errorDiv);
+}

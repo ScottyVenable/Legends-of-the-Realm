@@ -8,15 +8,57 @@
             "name": "Play (Internal Console)",
             "type": "debugpy",
             "request": "launch",
-            "program": "game.py",
-            "console": "integratedTerminal"
+            "program": "${workspaceFolder}/game.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true
         },
         {
-            "name": "Play (Seperate Terminal)",
+            "name": "Play (External Console)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
-            "console": "externalTerminal"
+            "program": "${workspaceFolder}/game.py",
+            "console": "externalTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true,
+            "stopOnEntry": false
+        },
+        {
+            "name": "Debug Game (External Console)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/game.py",
+            "console": "externalTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": false,
+            "stopOnEntry": true,
+            "debugOptions": [
+                "RedirectOutput"
+            ]
+        },
+        {
+            "name": "Attach to Running Game",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
+            ]
+        },
+        {
+            "type": "chrome",
+            "name": "http://127.0.0.1:3000/browser-version/index.html",
+            "request": "launch",
+            "url": "http://127.0.0.1:3000/browser-version/index.html"
         }
     ]
 }
